@@ -42,8 +42,8 @@ The GitHub download has **no songs**. Put your own files directly in **Audio/** 
 
 ## 6. Keep the best image
 
-Highest available graphics are selected by default. The real sky panorama is **16K**, cloud/night maps are **8K**, and rendering uses native display density with multisample antialiasing. Quality does not decrease automatically when frame rate drops.
+Live adaptive graphics is enabled by default. It targets **60 FPS**, adjusting resolution, antialiasing, bloom, Hubble shadows, and photographic textures to the device and measured rendering load. It restores detail after sustained headroom. The maximum photographic sky is **16K** with **8K** cloud/night maps; prepared 8K/4K/2K alternatives reduce memory use on smaller computers.
 
-For a smaller computer, deliberately select <http://127.0.0.1:4173/?quality=8k>. This reduces sky/cloud/night asset sizes. Enable browser hardware acceleration if you see a black screen. The photographic sky has no invented star particles; [stars and dust](starlight-science.md) explains the optional observing effect and the limits of the visual simulation.
+Use <http://127.0.0.1:4173/?quality=8k> to keep adaptation while capping sky detail at 8K, or <http://127.0.0.1:4173/?fps=30> for a 30 FPS target. Use <http://127.0.0.1:4173/?quality=highest> when you want fixed maximum quality despite slower rendering or greater memory use. Enable browser hardware acceleration if you see a black screen. The photographic sky has no invented star particles; [stars and dust](starlight-science.md) explains the optional observing effect and the limits of the visual simulation.
 
 Press **H** for the guide, **Escape** or right-click for the system, and **Ctrl+C in the terminal** when finished. When sharing the project, keep the complete repository folder together.

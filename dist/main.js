@@ -4,6 +4,15 @@ import { loadSatellite, updateSatellite } from './satellite.js';
 import { SatelliteMusic } from './music.js';
 import { MusicControls } from './music-controls.js';
 import { AnimationClocks, animationTargets } from './animation.js';
+import {
+  AdaptiveGraphics,
+  graphicsLevels,
+  renderPixelRatio,
+  renderBufferBytes,
+  textureBytes,
+} from './graphics-policy.js';
+import { GraphicsTextures } from './graphics-textures.js';
+import { GpuTimer } from './gpu-timer.js';
 import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -27,7 +36,8 @@ let renderer;
 try {
   renderer = new THREE.WebGLRenderer({
     canvas,
-    antialias: true,
+    // The HDR composer provides MSAA; a second canvas MSAA buffer wastes RAM.
+    antialias: false,
     powerPreference: 'high-performance',
   });
 } catch (error) {
@@ -36,8 +46,34 @@ try {
   );
   throw error;
 }
+const graphicsParams = new URLSearchParams(location.search);
+const optimizer = new AdaptiveGraphics({
+  deviceMemory: navigator.deviceMemory,
+  maxTextureSize: renderer.capabilities.maxTextureSize,
+  quality: graphicsParams.get('quality') || 'auto',
+  targetFps: Number(graphicsParams.get('fps')),
+});
+const maxRenderDimension = Math.min(
+  renderer.capabilities.maxTextureSize,
+  renderer.getContext().getParameter(renderer.getContext().MAX_RENDERBUFFER_SIZE),
+);
+const viewportBudget = () => ({
+  width: innerWidth,
+  height: innerHeight,
+  nativePixelRatio: devicePixelRatio,
+  maxDimension: maxRenderDimension,
+  budget: optimizer.enabled ? optimizer.budget : Infinity,
+});
+const effectiveProfile = (profile = optimizer.profile) => ({
+  ...profile,
+  samples: Math.min(profile.samples, renderer.capabilities.maxSamples),
+  shadowSize: Math.min(profile.shadowSize, renderer.capabilities.maxTextureSize),
+});
+let resolutionScale = renderPixelRatio(viewportBudget(), effectiveProfile());
+renderer.setPixelRatio(resolutionScale);
 renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(devicePixelRatio);
+let gpuTimer = new GpuTimer(renderer.getContext());
+let contextLost = false;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.1;
@@ -52,16 +88,21 @@ controls.maxDistance = 600;
 controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: null, RIGHT: null };
 // The postprocessing target needs its own multisampling; canvas antialiasing
 // alone does not smooth silhouettes rendered through an EffectComposer.
-const antialiasSamples = renderer.capabilities.maxSamples;
 const composer = new EffectComposer(
   renderer,
   new THREE.WebGLRenderTarget(innerWidth, innerHeight, {
     type: THREE.HalfFloatType,
-    samples: antialiasSamples,
+    samples: effectiveProfile().samples,
   }),
 );
 composer.addPass(new RenderPass(scene, camera));
 const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.1, 0.35, 1.6);
+const resizeBloom = bloom.setSize.bind(bloom);
+bloom.setSize = (width, height) => {
+  const scale = optimizer.profile.bloomScale;
+  resizeBloom(Math.max(64, width * scale), Math.max(64, height * scale));
+};
+bloom.enabled = optimizer.profile.bloomScale > 0;
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
 
@@ -117,16 +158,13 @@ let sky,
 let flight = null,
   followingPosition = new THREE.Vector3(),
   lastFrame = 0;
-let resolutionScale = devicePixelRatio;
-let fpsSum = 0,
-  fpsFrames = 0,
-  fpsTime = 0;
-// Highest available detail is the default. Only a hardware texture limit or
-// an explicit ?quality=8k request selects the smaller photographic assets.
-const prefer16K =
-  renderer.capabilities.maxTextureSize >= 16384 &&
-  new URLSearchParams(location.search).get('quality') !== '8k';
-const skySize = prefer16K ? 16384 : 8192;
+let memoryCheckAt = 0,
+  extraTextureMemory = 0,
+  lastShadowUpdate = -Infinity;
+let longFrames = 0;
+const shadowFrustum = new THREE.Frustum();
+const shadowProjection = new THREE.Matrix4();
+const satelliteSphere = new THREE.Sphere(new THREE.Vector3(), 1.55);
 let skyShimmer = true;
 let lastJourney = null;
 let previousViewport = { width: innerWidth, height: innerHeight };
@@ -153,38 +191,87 @@ const musicControls = new MusicControls(canvas, music, (open) => {
   );
 });
 const manager = new THREE.LoadingManager();
+let textureLoadingComplete = false;
 manager.onProgress = (_, loaded, total) => {
-  $('loading-progress').style.width = `${(loaded / total) * 100}%`;
+  if (textureLoadingComplete) $('loading-progress').style.width = `${80 + (loaded / total) * 20}%`;
 };
 manager.onError = (url) => {
+  if (graphicsReady) {
+    console.warn('Adaptive texture unavailable:', url);
+    return;
+  }
   showError(
     `A local texture could not be loaded (${url.split('/').pop()}). Reload the page or run npm install in the PLansi_xi folder.`,
   );
 };
-const textureLoader = new THREE.TextureLoader(manager);
 const maps = {};
-const loadMap = async (name, path, color = false) => {
-  const texture = await textureLoader.loadAsync(path);
-  texture.colorSpace = color ? THREE.SRGBColorSpace : THREE.NoColorSpace;
-  texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-  texture.wrapS = THREE.RepeatWrapping;
-  maps[name] = texture;
-};
+let graphicsReady = false;
+const textures = new GraphicsTextures(renderer, manager, maps, (_, next, previous) => {
+  scene.traverse((object) => {
+    for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
+      for (const uniform of Object.values(material?.uniforms || {}))
+        if (uniform.value === previous) uniform.value = next;
+    }
+  });
+});
+let longFrameObserver;
+if (globalThis.PerformanceObserver?.supportedEntryTypes?.includes('long-animation-frame')) {
+  longFrameObserver = new PerformanceObserver((list) => {
+    longFrames += list.getEntries().length;
+  });
+  longFrameObserver.observe({ type: 'long-animation-frame' });
+}
+canvas.addEventListener('webglcontextlost', (event) => {
+  event.preventDefault();
+  contextLost = true;
+  textures.cancel();
+  gpuTimer.clear();
+  lastFrame = 0;
+  optimizer.change(
+    Math.max(3, optimizer.level + 1),
+    performance.now(),
+    'graphics context recovery',
+  );
+});
+canvas.addEventListener('webglcontextrestored', () => {
+  contextLost = false;
+  gpuTimer = new GpuTimer(renderer.getContext());
+  lastFrame = 0;
+  optimizer.reset(performance.now());
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
+  renderer.shadowMap.autoUpdate = false;
+  renderer.shadowMap.needsUpdate = true;
+  if (bodies.satellite) {
+    bodies.satellite.sunlight.shadow.map?.dispose();
+    bodies.satellite.sunlight.shadow.map = null;
+  }
+  applyGraphics(performance.now());
+});
+document.addEventListener('visibilitychange', () => {
+  lastFrame = 0;
+  optimizer.reset(performance.now());
+  gpuTimer.clear();
+});
 try {
-  await Promise.all([
-    loadMap('earth', '/assets/earth-day.jpg', true),
-    loadMap('night', prefer16K ? '/assets/earth-night.jpg' : '/assets/earth-night-4k.jpg', true),
-    loadMap('clouds', prefer16K ? '/assets/earth-clouds.jpg' : '/assets/earth-clouds-4k.jpg'),
-    loadMap('normal', '/assets/earth-bump.jpg'),
-    loadMap('specular', '/assets/earth-specular.jpg'),
-    loadMap('moon', '/assets/moon.jpg', true),
-    loadMap('moonHeight', '/assets/moon-height.jpg'),
-    loadMap('kepler', '/assets/kepler.jpg', true),
-    loadMap('sky', `/assets/milky-way-photo-${prefer16K ? '16k' : '8k'}.jpg`, true),
-    loadMap('starlightResponse', '/assets/starlight-response.png'),
-  ]);
+  await textures.initialize(optimizer.profile.textures, (loaded, total) => {
+    $('loading-progress').style.width = `${(loaded / total) * 80}%`;
+  });
+  textureLoadingComplete = true;
   buildScene();
-  bodies.satellite = await loadSatellite(scene, renderer, maps.sky, manager);
+  bodies.satellite = await loadSatellite(scene, renderer, maps.sky, manager, effectiveProfile());
+  const satelliteTextures = new Set();
+  bodies.satellite.model.traverse((object) => {
+    for (const material of Array.isArray(object.material) ? object.material : [object.material])
+      for (const value of Object.values(material || {}))
+        if (value?.isTexture) satelliteTextures.add(value);
+  });
+  extraTextureMemory = [...satelliteTextures].reduce(
+    (sum, texture) =>
+      sum +
+      textureBytes(texture.image?.width || 0, texture.image?.height || 0, texture.generateMipmaps),
+    0,
+  );
   surfaceObjects.push(...bodies.satellite.pickable);
   updateOrbits();
   mode = 'system';
@@ -195,7 +282,11 @@ try {
   history.replaceState(null, '', '#system');
   resize();
   controls.update();
+  await renderer.compileAsync(scene, camera);
   composer.render();
+  graphicsReady = true;
+  synchronizeTextures();
+  optimizer.reset(performance.now());
   $('loading').classList.add('done');
   setTimeout(() => ($('loading').hidden = true), 1100);
   requestAnimationFrame(frame);
@@ -465,6 +556,13 @@ function navigate(id, overview = false) {
 }
 
 function frame(now) {
+  if (document.hidden || contextLost) {
+    lastFrame = 0;
+    requestAnimationFrame(frame);
+    return;
+  }
+  const cpuStart = performance.now();
+  if (devicePixelRatio !== previousViewport.pixelRatio) resize();
   const dt = lastFrame ? Math.min((now - lastFrame) / 1000, 0.05) : 0;
   if (!document.hidden) clocks.advance(dt);
   sky.position.copy(camera.position);
@@ -533,8 +631,26 @@ function frame(now) {
   } else controls.update();
   sky.position.copy(camera.position);
   music.update(camera, bodies.satellite.group.position, bodies, now);
+  const profile = effectiveProfile();
+  if (now - lastShadowUpdate >= 1000 / profile.shadowHz) {
+    camera.updateMatrixWorld();
+    shadowProjection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    shadowFrustum.setFromProjectionMatrix(shadowProjection);
+    satelliteSphere.center.copy(bodies.satellite.group.position);
+    const projectedRadius =
+      (bodies.satellite.radius * innerHeight) /
+      (2 *
+        Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) *
+        camera.position.distanceTo(satelliteSphere.center));
+    if (projectedRadius > 16 && shadowFrustum.intersectsSphere(satelliteSphere)) {
+      renderer.shadowMap.needsUpdate = true;
+      lastShadowUpdate = now;
+    }
+  }
+  gpuTimer.begin(now);
   composer.render();
-  updatePerformance(now);
+  gpuTimer.end();
+  updatePerformance(now, performance.now() - cpuStart);
   lastFrame = now;
   requestAnimationFrame(frame);
 }
@@ -542,11 +658,6 @@ function frame(now) {
 function resize() {
   const w = innerWidth,
     h = innerHeight;
-  if (resolutionScale !== devicePixelRatio) {
-    resolutionScale = devicePixelRatio;
-    renderer.setPixelRatio(resolutionScale);
-    composer.setPixelRatio(resolutionScale);
-  }
   if (bodies[selected] && mode === 'explore') {
     const ratio =
       framingFactor(selected, w, h) /
@@ -561,26 +672,89 @@ function resize() {
     else camera.position.sub(controls.target).multiplyScalar(ratio).add(controls.target);
     controls.maxDistance = Math.max(600, overviewOffset(w, h).length() * 1.5);
   }
-  previousViewport = { width: w, height: h };
-  renderer.setSize(w, h);
-  composer.setSize(w, h);
+  previousViewport = { width: w, height: h, pixelRatio: devicePixelRatio };
+  applyGraphics(performance.now());
   camera.aspect = w / h;
   camera.clearViewOffset();
   camera.updateProjectionMatrix();
   controls.handleResize();
 }
 
-function updatePerformance(now) {
-  if (lastFrame && !document.hidden) {
-    fpsSum += 1000 / Math.max(now - lastFrame, 1);
-    fpsFrames++;
+function graphicsMemory(profile = effectiveProfile(), pixelRatio = resolutionScale) {
+  return (
+    textures.bytes() +
+    extraTextureMemory +
+    renderBufferBytes(innerWidth, innerHeight, pixelRatio, profile)
+  );
+}
+
+function synchronizeTextures() {
+  if (
+    !graphicsReady ||
+    textures.busy ||
+    contextLost ||
+    textures.tier === optimizer.profile.textures
+  )
+    return;
+  textures.transition(optimizer.profile.textures).finally(() => {
+    optimizer.reset(performance.now());
+    if (!textures.error) synchronizeTextures();
+  });
+}
+
+function applyGraphics(now) {
+  const profile = effectiveProfile();
+  bloom.enabled = profile.bloomScale > 0;
+  for (const target of [composer.renderTarget1, composer.renderTarget2]) {
+    if (target.samples !== profile.samples) {
+      target.samples = profile.samples;
+      target.dispose();
+    }
   }
-  if (now - fpsTime > 5000 && fpsFrames > 20) {
-    fps = Math.round(fpsSum / fpsFrames);
-    fpsTime = now;
-    fpsSum = 0;
-    fpsFrames = 0;
+  resolutionScale = renderPixelRatio(viewportBudget(), profile);
+  renderer.setPixelRatio(resolutionScale);
+  renderer.setSize(innerWidth, innerHeight);
+  composer.setPixelRatio(resolutionScale);
+  composer.setSize(innerWidth, innerHeight);
+  const shadow = bodies.satellite?.sunlight.shadow;
+  if (shadow && shadow.mapSize.x !== profile.shadowSize) {
+    shadow.map?.dispose();
+    shadow.map = null;
+    shadow.mapSize.set(profile.shadowSize, profile.shadowSize);
+    renderer.shadowMap.needsUpdate = true;
+    lastShadowUpdate = -Infinity;
   }
+  optimizer.reset(now);
+  synchronizeTextures();
+}
+
+function updatePerformance(now, cpuMs) {
+  if (!textures.busy && now - memoryCheckAt >= 2000) {
+    memoryCheckAt = now;
+    if (optimizer.constrainMemory(graphicsMemory(), now)) applyGraphics(now);
+  }
+  const next = effectiveProfile(
+    graphicsLevels[Math.max(optimizer.minimumLevel, optimizer.level - 1)],
+  );
+  const nextRatio = renderPixelRatio(viewportBudget(), next);
+  const canUpgrade =
+    textures.peakBytes(next.textures) +
+      extraTextureMemory +
+      renderBufferBytes(innerWidth, innerHeight, nextRatio, next) <
+    optimizer.budget;
+  if (
+    lastFrame &&
+    optimizer.record({
+      now,
+      frameMs: now - lastFrame,
+      cpuMs,
+      gpuMs: gpuTimer.value(now),
+      transitioning: textures.busy,
+      canUpgrade,
+    })
+  )
+    applyGraphics(now);
+  fps = optimizer.metrics.fps ?? fps;
 }
 
 function showError(message) {
@@ -706,15 +880,29 @@ function getState() {
     screen,
     resolutionScale,
     quality: {
-      preset: prefer16K ? 'highest' : '8k',
-      nativePixelRatio: resolutionScale,
-      antialiasSamples,
-      automaticResolutionReduction: false,
+      preset: optimizer.profile.name,
+      nativePixelRatio: devicePixelRatio,
+      renderPixelRatio: resolutionScale,
+      antialiasSamples: effectiveProfile().samples,
+      automaticResolutionReduction: optimizer.enabled,
+      bloomScale: optimizer.profile.bloomScale,
+      shadowSize: effectiveProfile().shadowSize,
+      textures: { ...textures.files },
+      optimizer: {
+        ...optimizer.snapshot(),
+        approximateDeviceMemoryGiB: navigator.deviceMemory ?? null,
+        estimatedGraphicsMemoryMiB: Math.round(graphicsMemory() / (1024 * 1024)),
+        gpuTimingAvailable: !!gpuTimer.extension,
+        longFrames,
+        changingTextures: textures.busy,
+        textureError: textures.error,
+        contextLost,
+      },
     },
     fps,
     lastJourney,
     music: { menuOpen: musicControls.open, ...music.getState() },
-    background: `NOIRLab all-sky photograph · ${skySize} × ${skySize / 2} from 40000 × 20000 source`,
+    background: `NOIRLab all-sky photograph · ${maps.sky.image.width} × ${maps.sky.image.height} from 40000 × 20000 source`,
     skyShimmer,
     skyEffect: skyShimmer
       ? 'Atmospheric observing treatment of existing photographic pixels; no moving dust or synthetic stars'

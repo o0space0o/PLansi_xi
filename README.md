@@ -60,15 +60,18 @@ Headphones reveal Hubble's position, spacious reverb, echo, and smooth muffling 
 
 ![NASA Hubble spacecraft orbiting Earth](docs/screenshots/hubble.jpg)
 
-## Highest graphics by default
+## Live adaptive graphics
 
-- **16384 × 8192 photographic sky**, prepared from a real 40000 × 20000 NOIRLab image.
-- **8192 × 4096 cloud and night-light maps**, NASA Earth surface **5400 × 2700**, and NASA lunar color **4096 × 2048**.
-- Native display pixel density, GPU-supported multisample antialiasing, HDR rendering, and restrained bloom. **No automatic resolution reduction.**
+- Up to a **16384 × 8192 photographic sky**, prepared from a real 40000 × 20000 NOIRLab image, with prepared 8K/4K/2K alternatives.
+- Up to **8192 × 4096 cloud and night-light maps**, NASA Earth surface **5400 × 2700**, and NASA lunar color **4096 × 2048**.
+- A live optimizer targets **60 FPS**, adapting render resolution, MSAA, bloom, spacecraft shadows, and texture memory. Quality rises again after sustained headroom, with a cooldown to prevent repeated switching.
+- Asynchronous GPU timing where supported, CPU/frame timing everywhere, asynchronous shader compilation, and background image decoding. Replaced textures release their GPU and decoded-image memory; hidden tabs pause scene work.
 - Surface relief, ocean reflections, clouds, atmospheric rims, finite-disc eclipses, and ring shadows following the visible bands and gaps.
 - NASA's textured Hubble GLB with metallic reflections, self-shadowing, Earth eclipses, and Earthshine.
 
-Only a GPU texture limit below 16384 selects the 8K sky automatically. For a smaller memory footprint, explicitly open **<http://127.0.0.1:4173/?quality=8k>**; this also selects 4K cloud/night maps. The default favors detail, so the largest photographic texture can take time to load.
+The default chooses a starting quality from approximate device memory and GPU limits, then responds to measured performance and estimated texture/render-buffer memory. Browsers do not expose free GPU memory, so these are conservative estimates, not an exact VRAM reading. No visible graphics panel is added.
+
+Use **<http://127.0.0.1:4173/?quality=8k>** to cap photographic detail at 8K while keeping adaptation, **<http://127.0.0.1:4173/?fps=30>** for a lower frame-rate target, or **<http://127.0.0.1:4173/?quality=highest>** to keep maximum supported assets, native density, and up to 8 MSAA samples fixed. Fixed highest mode can use substantially more memory and run slowly. GPU dimension limits still apply.
 
 **Background stars are photographed, not invented.** Optional smooth brightness/color gains affect only existing isolated bright photographic regions, with no added star particles, moving dust sheet, or blanket flicker. Rapid night-sky twinkling is an atmospheric effect; interstellar dust extinction is already recorded in the photo. Press **T** for the steadier view expected from space. [Real-image comparisons and scientific explanation](docs/starlight-science.md).
 
@@ -102,7 +105,7 @@ The [GitHub validation workflow](.github/workflows/validate.yml) runs the same c
 
 - Project renamed to **PLansi_xi** throughout the application, launcher, package, diagnostics, and documentation.
 - Scroll speed now targets the object under the pointer, with independent body and sky clocks.
-- Highest available textures and native resolution are the defaults; postprocessing has multisample antialiasing.
+- Live adaptive graphics balances measured frame time and estimated memory, with automatic detail recovery and a fixed highest-quality option.
 - Illustrated tutorial, full music instructions, and reusable technical documentation included.
 - Previous ZIP exports removed. This repository is the shareable project reference.
 

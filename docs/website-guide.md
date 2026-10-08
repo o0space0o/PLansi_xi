@@ -35,7 +35,9 @@ The wider approach leaves space around each world. Trackball rotation can roll t
 
 ## Graphics and background
 
-Highest detail is the default: a **16384 × 8192** NOIRLab all-sky photograph, prepared from its 40000 × 20000 original, plus 8K cloud/night maps. Native display resolution and GPU-supported multisample antialiasing stay enabled; frame rate does not silently reduce quality. Smaller GPU texture limits select the compatible 8K sky. On a smaller computer, explicitly use <http://127.0.0.1:4173/?quality=8k> for an 8K sky and 4K cloud/night maps.
+The default live optimizer targets **60 FPS**. It adjusts render resolution, MSAA, bloom, spacecraft shadow quality, and photographic texture sizes using measured frame/CPU time, asynchronous GPU timings where available, approximate device memory, and estimated graphics allocations. It lowers quality when rendering stays slow and restores detail after sustained headroom. The maximum sky is a **16384 × 8192** NOIRLab photograph, prepared from its 40000 × 20000 original; smaller devices use prepared 8K/4K/2K versions. Browser memory hints are approximate and may be unavailable; free GPU memory cannot be read directly.
+
+Use <http://127.0.0.1:4173/?quality=8k> to cap sky detail at 8K while keeping adaptation, <http://127.0.0.1:4173/?fps=30> for a 30 FPS target, or <http://127.0.0.1:4173/?quality=highest> for fixed maximum quality. Fixed highest mode can run slowly and use much more memory. Hidden tabs pause scene work; returning to the page resumes without treating the pause as poor performance.
 
 No extra star objects are rendered. The default subtle atmospheric shimmer changes light already photographed. Press **T** to use the steady photo expected from space. [The science reference](starlight-science.md) explains dust and twinkling using real observations. There is no texture-wide animation noise, blur, or moving dust wash.
 
@@ -43,15 +45,15 @@ Earth and Luna use NASA imagery; Hubble uses NASA's textured model. Kepler X and
 
 ## Common issues
 
-| Symptom                                      | What to do                                                                                           |
-| -------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Launcher cannot find its runtime             | Keep `runtime`, `dist`, `Audio`, and `scripts` beside the launcher; download the complete repository |
-| Blank or black scene                         | Enable browser hardware acceleration and reload; read any error shown                                |
-| Page does not open                           | Keep the terminal open and enter the printed local address                                           |
-| Slow loading or low memory                   | Select `?quality=8k`; close other graphics-heavy tabs                                                |
-| Wheel changes volume / camera does not react | Press M or middle-click to leave music mode                                                          |
-| Wrong object changes speed                   | Place the pointer directly over its visible surface, or its rings for Aurelia                        |
-| Music is quiet or muffled                    | Check volume and move to a clear line of sight to Hubble                                             |
-| A song does not play                         | Follow [music troubleshooting](music-player.md#troubleshooting)                                      |
+| Symptom                                      | What to do                                                                                                     |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Launcher cannot find its runtime             | Keep `runtime`, `dist`, `Audio`, and `scripts` beside the launcher; download the complete repository           |
+| Blank or black scene                         | Enable browser hardware acceleration and reload; read any error shown                                          |
+| Page does not open                           | Keep the terminal open and enter the printed local address                                                     |
+| Slow rendering or low memory                 | Use the default adaptive mode; try `?fps=30` or cap detail with `?quality=8k`; close other graphics-heavy tabs |
+| Wheel changes volume / camera does not react | Press M or middle-click to leave music mode                                                                    |
+| Wrong object changes speed                   | Place the pointer directly over its visible surface, or its rings for Aurelia                                  |
+| Music is quiet or muffled                    | Check volume and move to a clear line of sight to Hubble                                                       |
+| A song does not play                         | Follow [music troubleshooting](music-player.md#troubleshooting)                                                |
 
 If port 4173 is occupied, run `node scripts/serve.mjs --port 4174` using installed Node or the bundled architecture-specific executable, then use the new printed address. On Windows add `--open` to open the browser automatically.

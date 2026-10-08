@@ -4,6 +4,9 @@ import sharp from 'sharp';
 for (const file of [
   'dist/main.js',
   'dist/animation.js',
+  'dist/graphics-policy.js',
+  'dist/graphics-textures.js',
+  'dist/gpu-timer.js',
   'dist/shaders.js',
   'dist/shadow-lighting.js',
   'dist/sky.js',
@@ -22,6 +25,8 @@ for (const file of [
   'scripts/build-guide.mjs',
   'scripts/sky.test.mjs',
   'scripts/animation.test.mjs',
+  'scripts/graphics.test.mjs',
+  'scripts/prepare-graphics.mjs',
 ]) {
   const result = spawnSync(process.execPath, ['--check', file], { encoding: 'utf8' });
   if (result.status !== 0) throw new Error(result.stderr);
@@ -38,6 +43,12 @@ for (const [name, minimumWidth] of Object.entries({
   kepler: 1700,
   'milky-way-photo-8k': 8192,
   'milky-way-photo-16k': 16384,
+  'milky-way-photo-4k': 4096,
+  'milky-way-photo-2k': 2048,
+  'earth-day-2k': 2048,
+  'earth-night-2k': 2048,
+  'earth-clouds-2k': 2048,
+  'moon-2k': 2048,
 })) {
   const image = await sharp(`dist/assets/${name}.jpg`).metadata();
   if (image.width < minimumWidth || image.width !== image.height * 2)
@@ -48,6 +59,9 @@ await access('dist/vendor/three.module.js');
 const response = await sharp('dist/assets/starlight-response.png').metadata();
 if (response.width !== 4096 || response.height !== 2048)
   throw new Error('Invalid starlight response map.');
+const smallResponse = await sharp('dist/assets/starlight-response-2k.png').metadata();
+if (smallResponse.width !== 2048 || smallResponse.height !== 1024)
+  throw new Error('Invalid adaptive starlight response map.');
 await access('dist/vendor/three.core.js');
 await access('dist/vendor/addons/controls/TrackballControls.js');
 await access('dist/vendor/addons/loaders/GLTFLoader.js');

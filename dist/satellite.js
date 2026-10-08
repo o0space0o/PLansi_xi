@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { sunVisibility } from './shadow-lighting.js';
 
-export async function loadSatellite(scene, renderer, skyMap, manager) {
+export async function loadSatellite(scene, renderer, skyMap, manager, graphics = {}) {
   const { scene: model } = await new GLTFLoader(manager).loadAsync('/assets/models/hubble.glb');
   const box = new THREE.Box3().setFromObject(model),
     sphere = box.getBoundingSphere(new THREE.Sphere());
@@ -29,13 +29,20 @@ export async function loadSatellite(scene, renderer, skyMap, manager) {
         material.roughnessMap,
         material.metalnessMap,
       ])
-        if (texture) texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        if (texture) texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
     }
   });
   const environmentCanvas = document.createElement('canvas');
   environmentCanvas.width = 2048;
   environmentCanvas.height = 1024;
-  environmentCanvas.getContext('2d').drawImage(skyMap.image, 0, 0, 2048, 1024);
+  const environmentContext = environmentCanvas.getContext('2d');
+  // ImageBitmap maps arrive with their WebGL Y flip baked into the source.
+  // Undo it for the reflection canvas, which applies its own texture flip.
+  if (!skyMap.flipY) {
+    environmentContext.translate(0, 1024);
+    environmentContext.scale(1, -1);
+  }
+  environmentContext.drawImage(skyMap.image, 0, 0, 2048, 1024);
   const texture = new THREE.CanvasTexture(environmentCanvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.mapping = THREE.EquirectangularReflectionMapping;
@@ -47,7 +54,7 @@ export async function loadSatellite(scene, renderer, skyMap, manager) {
   const sunlight = new THREE.DirectionalLight(0xfff0d9, 3.0);
   sunlight.target = group;
   sunlight.castShadow = true;
-  const shadowSize = Math.min(4096, renderer.capabilities.maxTextureSize);
+  const shadowSize = Math.min(graphics.shadowSize || 2048, renderer.capabilities.maxTextureSize);
   sunlight.shadow.mapSize.set(shadowSize, shadowSize);
   sunlight.shadow.camera.left = -2;
   sunlight.shadow.camera.right = 2;
@@ -60,6 +67,8 @@ export async function loadSatellite(scene, renderer, skyMap, manager) {
   scene.add(sunlight);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;
+  renderer.shadowMap.autoUpdate = false;
+  renderer.shadowMap.needsUpdate = true;
   sunlight.shadow.radius = 2;
   const earthshine = new THREE.PointLight(0x83b3e9, 5, 20, 2);
   scene.add(earthshine);

@@ -2,9 +2,9 @@
 
 ## Automated checks
 
-`npm run check` validates application/server syntax, HTML asset references, local Three.js dependencies, actual texture dimensions, response-map dimensions, and the Hubble GLB. Verified sizes: Earth 5400 × 2700; Luna 4096 × 2048; clouds/night 8192 × 4096 with 4096 × 2048 fallbacks; Kepler 1774 × 887; photographic sky 16384 × 8192 and 8192 × 4096. The source is 40000 × 20000. Hubble contains 11 meshes and 10 embedded textures.
+`npm run check` validates application/server syntax, HTML asset references, local Three.js dependencies, actual texture dimensions, response-map dimensions, and the Hubble GLB. Verified sizes: Earth 5400 × 2700; Luna 4096 × 2048; clouds/night 8192 × 4096 with 4096 × 2048 fallbacks; Kepler 1774 × 887; photographic sky 16384 × 8192, 8192 × 4096, 4096 × 2048, and 2048 × 1024. Earth, Luna, clouds, and night lights also have prepared 2048 × 1024 alternatives; response maps are 4096 × 2048 and 2048 × 1024. The source photograph is 40000 × 20000. Hubble contains 11 meshes and 10 embedded textures.
 
-`npm test` passes thirteen behavioral checks:
+`npm test` passes twenty-two behavioral checks:
 
 1. Middle-button mode switching without consuming normal scene clicks.
 2. Short play/stop clicks and suppressed music-mode context menu.
@@ -19,12 +19,25 @@
 11. Each pointed body's speed adjustment affects only its own clock.
 12. Background pause/resume stays independent of body clocks and future orbit predictions.
 13. Rates stay within 0–80×, paused targets resume, and invalid inputs cannot corrupt clocks.
+14. Sustained rendering pressure lowers quality, with delayed restoration after headroom returns.
+15. Single stalls, background resets, and texture uploads do not spuriously lower quality.
+16. Memory hints, unsupported hints, hardware limits, explicit 8K ceilings, and fixed highest mode stay bounded.
+17. GPU timing distinguishes browser pacing from slow work, with a CPU/frame fallback and a 30 FPS option.
+18. Resolution respects device density, GPU dimensions, memory limits, and the active quality profile.
+19. Texture plans honor GPU texture limits and reduce estimated decoded/GPU memory with prepared smaller photographs.
+20. Texture replacements upload before binding and release the previous GPU texture and decoded image afterward.
+21. Cancelled decodes cannot replace visible images and release their temporary resources.
+22. GPU timing polls asynchronously, caps outstanding queries, and discards disjoint/stale results.
 
 `npm run format:check` checks consistent formatting. Generated HTML, vendor files, binary assets, and archives are excluded. Both the ARM64 and x64 Node.js executables report v24.21.0 when run on this Windows machine.
 
 ## Browser verification
 
-The local in-app Chromium preview compiled the surface, atmosphere, ring, spacecraft, and photographic-shimmer shaders. The default selected the 16K sky, native pixel ratio 1, and 8 MSAA samples, with automatic resolution reduction disabled and no console warnings/errors. The observed frame rate was 60 FPS in the 974 × 884 viewport on this machine; this is an observation, not a guarantee for every device. The explicit 8K fallback also loaded successfully; its vendor PMREM shader reported a harmless tiny-constant precision warning, with no errors.
+The adaptive update was verified in the local in-app Chromium browser. It compiled the surface, atmosphere, ring, spacecraft, and photographic-shimmer shaders with no console warnings/errors. Initial high quality used the 8K sky, native DPR 1, four MSAA samples, asynchronous GPU timing, and an estimated 1033 MiB graphics footprint. Observed frame rate was 60 FPS at 1280 × 720. This is an observation on this machine, not a guarantee for every device.
+
+A 3840 × 2160 stress test drove two automatic quality reductions to efficient mode: render DPR 0.75, zero MSAA samples, half-size bloom, 1024-pixel shadows, 4K sky, and 2K planet/cloud/night/response maps. The scene settled at 60 FPS with about 7.9 ms GPU time and an estimated 484 MiB graphics footprint. Replaced large images were released and no texture errors occurred. After restoring the normal viewport, automatic recovery restored 8K/full-size planet textures and two MSAA samples; a more expensive subsequent upgrade backed down again and honored the cooldown. GPU dimensions and estimated memory also constrained render resolution before performance sampling. Memory budget thresholds were widened on devices reporting at least 8/16 GiB to permit 16K recovery when sufficient measured headroom is present. A final 4K run under heavier load reached recovery mode (render DPR 0.45, bloom disabled, 512-pixel shadows, 2K sky), settling at 60 FPS with about 10.2 ms GPU time and an estimated 322 MiB footprint. The optimizer selects different levels as the measured load changes; neither run reported console warnings/errors.
+
+Fixed `?quality=highest` loaded the 16K sky, 8K cloud/night maps, native DPR 1, eight MSAA samples, and 4096-pixel shadows with adaptation disabled and no console errors. Its estimated graphics footprint was 2522 MiB in the normal viewport. The final adaptive preview independently upgraded to the 16K sky and 8K cloud/night maps at native DPR 1 with four MSAA samples, holding 60 FPS at about 8.4 ms GPU time and an estimated 2454 MiB footprint in the 849 × 884 viewport. Adaptive Earth and Hubble approaches each completed over 240 frames with positive globe clearance. Browser memory hints and graphics allocations are estimates; actual free VRAM is not exposed. Context restoration and optional-API fallbacks are implemented; automated checks cover cancellation/timing fallbacks, while an actual device out-of-memory event was not induced.
 
 After the independent-clock update, Earth, Luna, Kepler, Aurelia, and Hubble approaches completed over 238–240 frames each. The respective measured minimum globe clearances were 18.43, 5.41, 5.41, 10.77, and 6.98 scene units. Native pointer/wheel input separately verified Earth, empty sky, Luna, Kepler, Aurelia, Aurelia's rings, and Hubble targeting. A 0.15-page upward wheel action changed only its target rate from 1 to approximately 1.489×; reversing it restored 1×. Paused Hubble retained its own orbital phase while Earth continued moving. Earlier checks covered responsive framing and horizontal/vertical turns exceeding 900 degrees. Wider approach framing is retained.
 
