@@ -2,6 +2,8 @@
 
 ## 1. Open the system
 
+For an online visit, open **[o0space0o.app](https://o0space0o.app/)** and allow the high-resolution textures to load. The controls below apply to the live preview too. To play your own songs from **Audio/**, use the local version:
+
 Download or clone the complete [PLansi_xi repository](https://github.com/o0space0o/PLansi_xi). On Windows, double-click **Start PLansi_xi.cmd**. Keep the terminal open and allow the high-resolution textures to load. The website opens at <http://127.0.0.1:4173> with the whole system in view. No visible panels or labels appear.
 
 On macOS/Linux, install Node.js 24 or newer and run `node scripts/serve.mjs`. **Guide.html** opens offline if you want to read instructions before starting.

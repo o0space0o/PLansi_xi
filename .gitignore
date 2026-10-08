@@ -8,3 +8,9 @@ dist/vendor-staging-*/
 *.log
 .env
 .env.*
+
+# Local Firebase deployment configuration and generated state.
+/firebase.json
+/.firebaserc
+/.firebase/
+/dist/404.html

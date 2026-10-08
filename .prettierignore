@@ -1,6 +1,7 @@
 dist/vendor/
 dist/assets/
 dist/help.html
+dist/404.html
 node_modules/
 runtime/
 original-assets/

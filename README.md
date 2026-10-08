@@ -2,6 +2,10 @@
 
 A local Three.js space explorer with photographic planetary textures, a real **16K Milky Way panorama**, continuous camera flights, and music transmitted from an orbiting NASA Hubble model. The scene stays clear of labels and control panels.
 
+**[Live website — o0space0o.app](https://o0space0o.app/)**
+
+Explore online, or follow the steps below to run locally and play your own songs from the **Audio/** folder.
+
 ![Earth and its atmosphere in PLansi_xi](docs/screenshots/earth.jpg)
 
 **[Step-by-step tutorial](docs/tutorial.md)** · **[All website controls](docs/website-guide.md)** · **[Music player](docs/music-player.md)** · **[Imagery and credits](docs/credits.md)**
@@ -88,7 +92,7 @@ npm run format:check
 npm run docs
 ```
 
-`dist/` contains readable browser source and prepared assets; there is no application build step. `scripts/` contains the local server, asset preparation, and checks. `docs/` contains the tutorial, music guide, scientific references, [architecture](docs/architecture.md), and [validation notes](docs/validation.md). Songs, large acquisition originals, local QA captures, dependency caches, and ZIP exports are excluded from Git. Browser graphics and Windows runtimes are included.
+`dist/` contains readable browser source and prepared assets; there is no application build step. `scripts/` contains the local server, asset preparation, and checks. `docs/` contains the tutorial, music guide, scientific references, [architecture](docs/architecture.md), and [validation notes](docs/validation.md). Songs, local Firebase configuration and deployment caches, large acquisition originals, local QA captures, dependency caches, and ZIP exports are excluded from Git. Browser graphics and Windows runtimes are included.
 
 The server binds to **127.0.0.1** and serves the browser app and allowlisted music files. Opening `dist/index.html` directly is unsupported; use the launcher or local server. If another app uses port 4173, run `node scripts/serve.mjs --port 4174` and visit the address it prints.
 
