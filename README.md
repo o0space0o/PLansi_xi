@@ -1,6 +1,6 @@
 # PLansi_xi
 
-A local Three.js space explorer with photographic planetary textures, a real **16K Milky Way panorama**, continuous camera flights, and music transmitted from an orbiting NASA Hubble model. A compact Schwarzschild black hole near Kepler X sits beside a hypothetical Ellis wormhole. A continuous camera crossing leads to a three-dimensional spiral galaxy, ionized nebula and molecular cloud, with adaptive density streaming.
+A local Three.js space explorer with photographic planetary textures, a real **16K Milky Way panorama**, continuous camera flights, and music transmitted from an orbiting NASA Hubble model. The original compact Schwarzschild black hole orbits Kepler X, with an accretion disk that turns through diagonal orientations. A three-dimensional spiral galaxy, ionized nebula and molecular cloud share the main universe with adaptive density streaming.
 
 **[Live website — o0space0o.app](https://o0space0o.app/)**
 
@@ -22,30 +22,34 @@ On macOS or Linux, install Node.js 24 or newer, run `node scripts/serve.mjs`, an
 
 ## Explore
 
-| Input                                | What happens                                              |
-| ------------------------------------ | --------------------------------------------------------- |
-| Left-click a planet, moon, or Hubble | Fly smoothly to it and follow its orbit                   |
-| Right-click                          | Fly back to the whole system                              |
-| Left-drag                            | Rotate freely, including repeated turns through the poles |
-| Wheel up / down **over an object**   | Speed up / slow down only that object's orbit and spin    |
-| Wheel up / down **over empty sky**   | Speed up / slow down the photographic background shimmer  |
-| 1 / 2 / 3 / 4 / 5                    | Visit Earth / Luna / Kepler X / Aurelia / Hubble          |
-| Escape                               | Return to the system                                      |
-| T                                    | Toggle photographic shimmer / steady space sky            |
-| H                                    | Open the instructions                                     |
-| Middle mouse click or M              | Enter or leave hidden music mode                          |
+| Input                                              | What happens                                              |
+| -------------------------------------------------- | --------------------------------------------------------- |
+| Left-click a planet, moon, Hubble, galaxy or cloud | Fly smoothly to a safe viewing distance                   |
+| Right-click                                        | Fly back to the whole system                              |
+| Left-drag                                          | Rotate freely, including repeated turns through the poles |
+| Wheel up / down **over an object**                 | Speed up / slow down only that object's orbit and spin    |
+| Wheel up / down **over empty sky**                 | Speed up / slow down the photographic background shimmer  |
+| 1 / 2 / 3 / 4 / 5                                  | Visit Earth / Luna / Kepler X / Aurelia / Hubble          |
+| B or 6                                             | Visit the original orbiting black hole                    |
+| G / N / C                                          | Visit the galaxy / nebula / molecular cloud               |
+| Escape                                             | Return to the system                                      |
+| T                                                  | Toggle photographic shimmer / steady space sky            |
+| H                                                  | Open the instructions                                     |
+| Middle mouse click or M                            | Enter or leave hidden music mode                          |
 
 Every target starts at **1×**. Enough downward scrolling pauses that target; scrolling upward resumes it. Rates are bounded at **80×**. Pausing Earth still lets Luna and Hubble orbit it; a paused moon is still carried through space by its moving parent. The wheel does not zoom or alter camera flight duration or music playback speed. Reloading restores all defaults.
 
 ![Aurelia and its banded rings](docs/screenshots/aurelia.jpg)
 
-## Cross the wormhole
+## Visit the black hole and distant matter
 
-Press **B** to approach the black hole, **W** to approach the adjacent wormhole, then **Enter** or click the throat again to cross. In the destination, **1–3** or a click approach the galaxy, nebula and molecular cloud within bounded viewing distances. Right-click/Escape returns to the overview. The universe view has no labels or controls.
+Press **B** or **6** to approach the original black hole, now in an inclined orbit 28 scene units around Kepler X. Click the galaxy or a cloud, or use **G/N/C**, to approach at about 4.8 bounding radii, farther on portrait screens. Right-click/Escape returns to the planetary overview. The universe view has no labels or visible controls.
 
-The camera moves through proper distance in an Ellis metric. Curved rays sample world-space density fields; there is no screen-image warp or animated tunnel overlay. At the throat, the application releases the previous full environment before loading the next. Small boundary representations keep both sides visible. Inactive orbital clocks pause; animation rates and local music position survive. All runtime data is local.
+The wormhole and separate environment have been removed. The galaxy and clouds occupy separate distant directions in the main universe. Workers stream density detail according to visibility, projected size and estimated memory. Only static volume light is cached; planets, sky, black hole and music remain live. All runtime data is local.
 
-The Schwarzschild optics include the critical shadow, a disk outside the ISCO, gravitational redshift and Doppler beaming. The wormhole is a separate hypothetical metric: entering a real black-hole horizon does not lead back out. Galaxy/gas fields are physically motivated models with normalized optical units, not a measured TNG snapshot or cosmological evolution. [Equations, assumptions and limits](docs/wormhole.md).
+The Schwarzschild optics include the critical shadow, a disk outside the ISCO, gravitational redshift and Doppler beaming. The disk's prescribed precession changes its orientation without changing the spherical metric. Galaxy/gas fields are physically motivated models with normalized optical units, not a measured TNG snapshot or cosmological evolution. [Equations, assumptions and limits](docs/space-objects.md).
+
+![Galaxy and clouds in the main universe](docs/screenshots/main-universe.jpg)
 
 ## Play music from Hubble
 
@@ -81,7 +85,7 @@ The default chooses a starting quality from approximate device memory and GPU li
 
 Use **<http://127.0.0.1:4173/?quality=8k>** to cap photographic detail at 8K while keeping adaptation, **<http://127.0.0.1:4173/?fps=30>** for a lower frame-rate target, or **<http://127.0.0.1:4173/?quality=highest>** to start at maximum detail while preserving HD output and keeping memory protection active. The optimizer adjusts integration samples, MSAA, bloom, shadows and textures; visible volume density detail remains high within the memory budget. GPU dimensions and allocation safety still bound output; a software GPU cannot guarantee 60 FPS.
 
-**Home background stars are photographed.** Optional smooth brightness/color gains affect only existing isolated bright photographic regions, with no added home-sky star particles, moving dust sheet, or blanket flicker. Rapid night-sky twinkling is an atmospheric effect; interstellar dust extinction is already recorded in the photo. Press **T** for the steadier view expected from space. The destination uses modeled 3D stellar positions and density fields. [Real-image comparisons and scientific explanation](docs/starlight-science.md).
+**Background stars are photographed.** Optional smooth brightness/color gains affect only existing isolated bright photographic regions, with no added panorama particles, moving dust sheet, or blanket flicker. Rapid night-sky twinkling is an atmospheric effect; interstellar dust extinction is already recorded in the photo. Press **T** for the steadier view expected from space. The additional galaxy uses modeled 3D stellar positions and density fields. [Real-image comparisons and scientific explanation](docs/starlight-science.md).
 
 Earth and Luna use real imagery. **Kepler X and Aurelia are imagined worlds**; Kepler's generated surface is 1774 × 887. The orbital arrangement, sizes, and distances are illustrative, and the application uses prescribed circular orbits rather than an N-body physics calculation. It is a photographic visual simulation, not a measured astronomical system. Rendering runs on the GPU through WebGL 2.
 
@@ -111,6 +115,9 @@ The [GitHub validation workflow](.github/workflows/validate.yml) runs the same c
 
 ## Current changes
 
+- Original black hole retained in an inclined Kepler orbit, with smoothly precessing disk orientation.
+- Galaxy and clouds moved into the main universe, with wider bounded visits and visibility-based detail streaming.
+- Wormhole travel and its separate environment removed; static volume caching keeps foreground motion live.
 - Project renamed to **PLansi_xi** throughout the application, launcher, package, diagnostics, and documentation.
 - Scroll speed now targets the object under the pointer, with independent body and sky clocks.
 - Live adaptive graphics balances measured frame time and estimated memory, with automatic detail recovery including highest mode with live memory protection.

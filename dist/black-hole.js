@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { raySteps } from './relativity.js';
-import { homeGLSL } from './wormhole.js';
+import { worldGLSL } from './space-radiance.js';
+import { volumeGLSL } from './deep-space.js';
+import { diskOrientation } from './space-layout.js';
 
 const vertexShader = `
 varying vec3 vWorld;
@@ -15,9 +17,10 @@ uniform float uRs, uTime;
 uniform int uSteps;
 varying vec3 vWorld;
 const float PI = 3.14159265359;
-${homeGLSL}
+${volumeGLSL}
+${worldGLSL}
 vec3 skyColor(vec3 d, vec3 origin) {
- return homeRadiance(origin,transpose(uDiskFrame)*normalize(d));
+ return worldRadiance(origin,transpose(uDiskFrame)*normalize(d));
 }
 vec3 acceleration(vec3 p, float l2) {
   float r2 = max(dot(p,p), 0.5);
@@ -85,18 +88,19 @@ void main() {
   gl_FragColor = vec4(mix(original,emission+background*transmission,edge),edge);
 }`;
 
-export function createBlackHole(maps, radius = 1.05, boundary) {
+export function createBlackHole(maps, radius = 1.05, radiance, fields) {
   const group = new THREE.Group();
-  const rotation = new THREE.Matrix4().makeRotationZ(0.32);
+  const orientation = diskOrientation(0);
+  const rotation = new THREE.Matrix4().makeRotationFromQuaternion(orientation);
   const diskFrame = new THREE.Matrix3().setFromMatrix4(rotation).transpose();
   const rs = radius / (Math.sqrt(27) / 2);
   const material = new THREE.ShaderMaterial({
     vertexShader,
     fragmentShader,
     uniforms: {
-      ...boundary.uniforms,
-      // While the full home scene exists, lens its full-resolution sources.
-      // Only the separate wormhole boundary retains the small copies.
+      ...fields.uniforms,
+      ...radiance.uniforms,
+      // Directly lens the current main universe's resident sources.
       uHomeSky: { value: maps.sky },
       uEarthMap: { value: maps.earth },
       uMoonMap: { value: maps.moon },
@@ -106,6 +110,7 @@ export function createBlackHole(maps, radius = 1.05, boundary) {
       uRs: { value: rs },
       uTime: { value: 0 },
       uSteps: { value: 192 },
+      uVolumeLod: { value: 2 },
     },
     transparent: true,
     depthWrite: false,
@@ -119,9 +124,13 @@ export function createBlackHole(maps, radius = 1.05, boundary) {
     group,
     surface,
     radius,
+    orientation,
     uniforms: material.uniforms,
     update(camera, time, level, preferHD = false) {
       surface.quaternion.copy(camera.quaternion);
+      orientation.copy(diskOrientation(time));
+      rotation.makeRotationFromQuaternion(orientation);
+      diskFrame.setFromMatrix4(rotation).transpose();
       material.uniforms.uTime.value = time;
       material.uniforms.uSteps.value = preferHD ? Math.max(160, raySteps(level)) : raySteps(level);
     },

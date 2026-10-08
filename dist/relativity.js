@@ -19,39 +19,6 @@ export function raySteps(level) {
   return [224, 192, 160, 128, 96, 80][Math.min(5, Math.max(0, level))];
 }
 
-// Ellis null geodesic in its orbital plane, throat radius a=1, c=1.
-// Hamiltonian: p_l² + b²/(1+l²)=1. RK4 is used for the reference
-// calculation and the offline ray table; no screen-coordinate distortion.
-export function ellisRay(l, angle, { boundary = 64, accuracy = 0.035 } = {}) {
-  const b = Math.sqrt(1 + l * l) * Math.sin(angle);
-  let p = Math.cos(angle),
-    phi = 0,
-    error = 0,
-    entered = Math.abs(l) < boundary;
-  const derivative = (x, v) => [v, (b * b * x) / (1 + x * x) ** 2, b / (1 + x * x)];
-  for (let i = 0; i < 20000; i++) {
-    if (Math.abs(l) >= boundary - 1e-10 && l * p > 0) break;
-    let h = accuracy * Math.min(35, 1 + Math.abs(l));
-    if (l * p > 0) h = Math.min(h, Math.max(1e-10, (boundary - Math.abs(l)) / Math.abs(p)));
-    const k1 = derivative(l, p);
-    const k2 = derivative(l + (h * k1[0]) / 2, p + (h * k1[1]) / 2);
-    const k3 = derivative(l + (h * k2[0]) / 2, p + (h * k2[1]) / 2);
-    const k4 = derivative(l + h * k3[0], p + h * k3[1]);
-    entered ||= Math.abs(l) < boundary;
-    l += (h * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0])) / 6;
-    p += (h * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])) / 6;
-    phi += (h * (k1[2] + 2 * k2[2] + 2 * k3[2] + k4[2])) / 6;
-    error = Math.max(error, Math.abs(p * p + (b * b) / (1 + l * l) - 1));
-  }
-  if (entered && Math.abs(l) > boundary) {
-    // Locate the finite-domain exit consistently across integration step sizes.
-    phi -= (b * (Math.abs(l) - boundary)) / ((1 + boundary * boundary) * Math.abs(p));
-    l = Math.sign(l) * boundary;
-    p = Math.sign(p) * Math.sqrt(Math.max(0, 1 - (b * b) / (1 + l * l)));
-  }
-  return { l, p, phi, b, side: Math.sign(l), error };
-}
-
 export function transfer(emission, extinction, distance) {
   const transmission = Math.exp(-extinction * distance);
   return {

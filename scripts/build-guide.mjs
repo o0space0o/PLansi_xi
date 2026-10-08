@@ -5,7 +5,7 @@ const sections = [
   ['tutorial', 'First visit', 'tutorial.md'],
   ['website', 'Website controls', 'website-guide.md'],
   ['music', 'Music player', 'music-player.md'],
-  ['wormhole', 'Black hole and wormhole', 'wormhole.md'],
+  ['space', 'Black hole and 3D matter', 'space-objects.md'],
   ['science', 'Stars and dust', 'starlight-science.md'],
   ['credits', 'Credits', 'credits.md'],
   ['architecture', 'Code reference', 'architecture.md'],

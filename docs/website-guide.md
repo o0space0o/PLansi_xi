@@ -1,8 +1,8 @@
 # Using PLansi_xi
 
-## Black hole and universe travel
+## Black hole and distant objects
 
-Press **B** to approach the black hole near Kepler X; **W** approaches the separate Ellis throat beside it. **Enter**, or a second click on the throat, crosses into the other environment. There, **1–3** approach the 3D galaxy, nebula and molecular cloud; **B/W** finds the return throat. Right-click/Escape shows the overview. No labels or crossing buttons appear in the universe view. [Physics and memory lifecycle](wormhole.md).
+Press **B** or **6** to approach the black hole orbiting Kepler X. **G**, **N** and **C**, or clicking the visible object, visit the spiral galaxy, nebula and molecular cloud in the main universe. Approaches stay about 4.8 radii away, farther on portrait screens. Right-click/Escape shows the planetary overview. There are no labels or visible controls. [Optics, 3D matter and memory](space-objects.md).
 
 ## Start and stop
 
@@ -14,18 +14,20 @@ On macOS/Linux, install Node.js 24 or newer, run `node scripts/serve.mjs`, and o
 
 ## Explore without a visible interface
 
-| Input                                | Action                                            |
-| ------------------------------------ | ------------------------------------------------- |
-| Left-click a planet, moon, or Hubble | Smooth flight to it, then follow its orbit        |
-| Right-click                          | Smooth return to the entire system                |
-| Left-drag                            | Rotate freely, through unlimited complete turns   |
-| Wheel up / down over a body          | Accelerate / slow its own orbit and spin          |
-| Wheel up / down over empty sky       | Accelerate / slow the background shimmer          |
-| 1 / 2 / 3 / 4 / 5                    | Select Earth / Luna / Kepler X / Aurelia / Hubble |
-| Escape                               | Return to the system overview                     |
-| T                                    | Switch photographic shimmer / steady space view   |
-| H                                    | Open instructions in a separate tab               |
-| Middle button or M                   | Enter or exit hidden music mode                   |
+| Input                                              | Action                                            |
+| -------------------------------------------------- | ------------------------------------------------- |
+| Left-click a planet, moon, Hubble, galaxy or cloud | Smooth flight to a safe viewing distance          |
+| Right-click                                        | Smooth return to the entire system                |
+| Left-drag                                          | Rotate freely, through unlimited complete turns   |
+| Wheel up / down over a body                        | Accelerate / slow its own orbit and spin          |
+| Wheel up / down over empty sky                     | Accelerate / slow the background shimmer          |
+| 1 / 2 / 3 / 4 / 5                                  | Select Earth / Luna / Kepler X / Aurelia / Hubble |
+| B or 6                                             | Visit the orbiting black hole                     |
+| G / N / C                                          | Visit the galaxy / nebula / molecular cloud       |
+| Escape                                             | Return to the system overview                     |
+| T                                                  | Switch photographic shimmer / steady space view   |
+| H                                                  | Open instructions in a separate tab               |
+| Middle button or M                                 | Enter or exit hidden music mode                   |
 
 ## Point to control time
 
@@ -43,7 +45,7 @@ The default live optimizer targets **60 FPS**. It adjusts render resolution, MSA
 
 Use <http://127.0.0.1:4173/?quality=8k> to cap sky detail at 8K while keeping adaptation, <http://127.0.0.1:4173/?fps=30> for a 30 FPS target, or <http://127.0.0.1:4173/?quality=highest> for maximum initial detail with HD output and live memory protection. Volume resolution, ray samples and secondary effects follow the measured budget. Hidden tabs pause scene work; returning to the page resumes without treating the pause as poor performance.
 
-The home panorama has no extra star objects. The destination uses real 3D stellar positions and emissive density volumes with parallax. The default subtle atmospheric shimmer changes light already photographed. Press **T** to use the steady photo expected from space. [The science reference](starlight-science.md) explains dust and twinkling using real observations. There is no texture-wide animation noise, blur, or moving dust wash.
+The distant panorama is photographic. The galaxy and clouds are additional real 3D stellar populations and emissive density volumes with parallax in the same universe. The default subtle atmospheric shimmer changes light already photographed. Press **T** to use the steady photo expected from space. [The science reference](starlight-science.md) explains dust and twinkling using real observations. There is no texture-wide animation noise, blur, or moving dust wash.
 
 Earth and Luna use NASA imagery; Hubble uses NASA's textured model. Kepler X and Aurelia are fictional. Sizes and orbits are arranged for viewing rather than a measured astronomical system or N-body calculation. [Full asset credits](credits.md).
 

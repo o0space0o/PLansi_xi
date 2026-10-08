@@ -138,8 +138,7 @@ export class GraphicsTextures {
       }
       this.maps[name] = next;
       this.files[name] = file;
-      // Upload one image per animation opportunity. During a crossing the
-      // metric view keeps rendering while the destination becomes GPU-ready.
+      // Upload one image per animation opportunity to bound startup peaks.
       if (typeof requestAnimationFrame === 'function')
         await new Promise((resolve) => requestAnimationFrame(resolve));
       if (generation !== this.generation) throw new DOMException('Aborted', 'AbortError');

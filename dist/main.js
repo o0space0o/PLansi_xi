@@ -14,11 +14,10 @@ import {
 import { GraphicsTextures } from './graphics-textures.js';
 import { GpuTimer } from './gpu-timer.js';
 import { createBlackHole } from './black-hole.js';
-import { createWormhole, HomeBoundary } from './wormhole.js';
-import { buildDeepSpace, deepWorlds, VolumeFields } from './deep-space.js';
-import { UniverseJourney, releaseScene } from './universe-lifecycle.js';
+import { SpaceRadiance } from './space-radiance.js';
+import { addSpaceVolumes, VolumeFields } from './deep-space.js';
+import { spaceObjects, volumeFraming, orbitalOffset } from './space-layout.js';
 import { VolumeRenderPass } from './volume-renderer.js';
-import { raySteps } from './relativity.js';
 import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -37,6 +36,7 @@ import {
 const $ = (id) => document.getElementById(id);
 const canvas = $('space');
 const scene = new THREE.Scene();
+const volumeScene = new THREE.Scene();
 scene.background = new THREE.Color(0x03060b);
 const camera = new THREE.PerspectiveCamera(38, innerWidth / innerHeight, 0.02, 4000);
 let renderer;
@@ -113,9 +113,9 @@ bloom.setSize = (width, height) => {
 bloom.enabled = optimizer.profile.bloomScale > 0;
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
-let portal, metricPass, volumePass;
+let volumePass;
 const fields = new VolumeFields(renderer);
-const boundary = new HomeBoundary();
+const radiance = new SpaceRadiance();
 
 const homeWorlds = {
   // Distances/radii are illustrative scene units; periods are simulated days.
@@ -163,20 +163,11 @@ const homeWorlds = {
     distance: 28,
     orbitPeriod: 950,
     phase: 4.8,
-    inclination: 0.42,
-  },
-  wormhole: {
-    name: 'Ellis throat',
-    radius: 1.4,
-    parent: 'blackhole',
-    distance: 9,
-    orbitPeriod: 1e12,
-    phase: 0,
-    inclination: 0,
+    inclination: 0.7,
+    ascendingNode: 0.82,
   },
 };
-let worldData = homeWorlds;
-let environment = 'home';
+const worldData = { ...homeWorlds, ...spaceObjects };
 const planetIds = ['earth', 'moon', 'kepler', 'aurelia'];
 const bodies = {};
 const surfaceObjects = [];
@@ -199,11 +190,6 @@ const satelliteSphere = new THREE.Sphere(new THREE.Vector3(), 1.55);
 let skyShimmer = true;
 let lastJourney = null;
 let previousViewport = { width: innerWidth, height: innerHeight };
-const savedViews = {};
-let transitAnimation = null;
-let crossing = null;
-let lastCrossing = null;
-let disposedResources = null;
 const sunPosition = new THREE.Vector3(0, 0, 0);
 const ringCenter = new THREE.Vector3(),
   ringNormal = new THREE.Vector3(-Math.sin(0.4), Math.cos(0.4), 0);
@@ -223,7 +209,7 @@ const musicControls = new MusicControls(canvas, music, (open) => {
     'aria-label',
     open
       ? 'Music mode. Left click plays, right click stops. Hold left for next track, hold right for previous. Wheel adjusts volume. Middle click exits.'
-      : 'Click a world or Hubble to approach. B approaches the black hole. W approaches the adjacent Ellis throat. Enter or a second click crosses the throat. Right-click returns to the overview. Scroll controls the pointed animation. Drag rotates freely. Middle click opens music mode.',
+      : 'Click a planet, Hubble, galaxy or cloud to approach. B approaches the orbiting black hole. G, N and C visit the galaxy, nebula and molecular cloud at a safe distance. Right-click returns to the overview. Drag rotates freely. Middle click opens music mode.',
   );
 });
 const manager = new THREE.LoadingManager();
@@ -232,7 +218,7 @@ manager.onProgress = (_, loaded, total) => {
   if (textureLoadingComplete) $('loading-progress').style.width = `${80 + (loaded / total) * 20}%`;
 };
 manager.onError = (url) => {
-  if (graphicsReady || journey.busy) {
+  if (graphicsReady) {
     console.warn('Adaptive texture unavailable:', url);
     return;
   }
@@ -251,17 +237,6 @@ function replaceTexture(_, next, previous) {
   });
 }
 let textures = new GraphicsTextures(renderer, manager, maps, replaceTexture);
-const journey = new UniverseJourney({
-  cover: () => animateTransit(0),
-  unload: unloadUniverse,
-  load: loadUniverse,
-  reveal: () => animateTransit(journey.phase === 'recovering' ? crossing.startProper : -16),
-  onPhase: (phase) => {
-    canvas.setAttribute('aria-busy', phase === 'idle' ? 'false' : 'true');
-    musicControls.enabled = phase === 'idle' && environment === 'home';
-  },
-});
-
 let longFrameObserver;
 if (globalThis.PerformanceObserver?.supportedEntryTypes?.includes('long-animation-frame')) {
   longFrameObserver = new PerformanceObserver((list) => {
@@ -309,15 +284,19 @@ try {
   });
   textureLoadingComplete = true;
   await fields.initialize();
+  radiance.bind(maps);
   buildScene();
-  await boundary.initialize(maps);
-  portal = await createWormhole(fields, boundary);
-  metricPass = new RenderPass(portal.metricScene, camera);
-  metricPass.enabled = false;
-  composer.insertPass(metricPass, 1);
-  volumePass = new VolumeRenderPass(scene, camera, fields, optimizer.preferHD);
+  addSpaceVolumes(volumeScene, fields, bodies, surfaceObjects);
+  volumePass = new VolumeRenderPass(volumeScene, camera, fields, optimizer.preferHD, () =>
+    Object.entries(bodies)
+      .filter(([, body]) => !body.volume)
+      .map(([id, body]) => ({
+        position: body.group.position,
+        radius: id === 'blackhole' ? (body.radius * 15) / (Math.sqrt(27) / 2) : body.radius,
+      })),
+  );
   composer.insertPass(volumePass, 1);
-  addPortal();
+  fields.setActive(true);
   bodies.satellite = await loadSatellite(scene, renderer, maps.sky, manager, effectiveProfile());
   measureSatelliteTextures();
   surfaceObjects.push(...bodies.satellite.pickable);
@@ -331,6 +310,7 @@ try {
   resize();
   controls.update();
   await renderer.compileAsync(scene, camera);
+  await renderer.compileAsync(volumeScene, camera);
   composer.render();
   graphicsReady = true;
   synchronizeTextures();
@@ -461,90 +441,10 @@ function buildScene() {
 }
 
 function addBlackHole() {
-  bodies.blackhole = createBlackHole(maps, worldData.blackhole.radius, boundary);
+  bodies.blackhole = createBlackHole(maps, worldData.blackhole.radius, radiance, fields);
   scene.add(bodies.blackhole.group);
   surfaceObjects.push(bodies.blackhole.surface);
 }
-function addPortal() {
-  bodies.wormhole = portal;
-  scene.add(portal.group);
-  surfaceObjects.push(portal.surface);
-}
-function animateTransit(proper) {
-  metricPass.enabled = true;
-  renderPass.enabled = false;
-  volumePass.enabled = false;
-  return new Promise((resolve) => {
-    transitAnimation = {
-      start: crossing.proper,
-      end: proper,
-      elapsed: 0,
-      duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 1 : 4.5,
-      resolve,
-    };
-  });
-}
-
-async function unloadUniverse() {
-  graphicsReady = false;
-  renderPass.enabled = false;
-  flight?.resolve?.({ canceled: true });
-  flight = null;
-  portal.group.removeFromParent();
-  volumePass.reset();
-  fields.setActive(false);
-  textures.cancel();
-  // Await a cancelled decode/upload before releasing its last bindings.
-  await textures.pending;
-  bodies.satellite?.environment.dispose();
-  disposedResources = releaseScene(
-    scene,
-    new Set([
-      ...Object.values(maps),
-      ...boundary.textures,
-      portal.lut,
-      ...Object.values(fields.fields).map((f) => f.texture),
-    ]),
-  );
-  await textures.dispose();
-  await fields.boundaryOnly();
-  renderer.renderLists.dispose();
-  for (const id of Object.keys(bodies)) delete bodies[id];
-  surfaceObjects.length = 0;
-  sky = null;
-  extraTextureMemory = 0;
-  gpuTimer.clear();
-}
-
-async function loadUniverse(destination, recovering = false) {
-  environment = destination;
-  if (!recovering) {
-    optimizer.level = savedViews[destination]?.graphicsLevel ?? optimizer.minimumLevel;
-    optimizer.reason = 'new environment performance budget';
-  }
-  worldData = destination === 'home' ? homeWorlds : deepWorlds;
-  textures = new GraphicsTextures(renderer, manager, maps, replaceTexture, destination);
-  await textures.initialize(recovering ? 'low' : optimizer.profile.textures);
-  if (destination === 'home') {
-    buildScene();
-    bodies.satellite = await loadSatellite(scene, renderer, maps.sky, manager, effectiveProfile());
-    surfaceObjects.push(...bodies.satellite.pickable);
-    measureSatelliteTextures();
-  } else {
-    sky = buildDeepSpace(scene, fields, bodies, surfaceObjects);
-    renderer.shadowMap.enabled = false;
-  }
-  addPortal();
-  updateOrbits();
-  selected = destination === 'home' ? 'kepler' : 'galaxy';
-  mode = 'system';
-  applyGraphics(performance.now());
-  await renderer.compileAsync(scene, camera);
-  if (contextLost) throw new Error('Graphics context interrupted the journey.');
-  graphicsReady = true;
-  optimizer.reset(performance.now());
-}
-
 function measureSatelliteTextures() {
   const images = new Set();
   bodies.satellite.model.traverse((object) => {
@@ -559,88 +459,16 @@ function measureSatelliteTextures() {
   );
 }
 
-async function enterWormhole() {
-  if (journey.busy) return journey.pending;
-  if (selected !== 'wormhole' || mode !== 'explore') await navigate('wormhole');
-  if (flight) await flight.promise;
-  if (selected !== 'wormhole' || mode !== 'explore' || flight || journey.busy)
-    return { canceled: true };
-  savedViews[environment] = {
-    selected,
-    mode,
-    position: camera.position.toArray(),
-    target: controls.target.toArray(),
-    up: camera.up.toArray(),
-    musicPlaying: music.getState().playing,
-    graphicsLevel: optimizer.level,
-  };
-  const center = portal.group.position.clone(),
-    axis = camera.position.clone().sub(center).normalize();
-  const proper = Math.sqrt(Math.max(0, camera.position.distanceToSquared(center) / 1.4 ** 2 - 1));
-  crossing = { origin: environment, center, axis, proper, startProper: proper };
-  if (musicControls.open) musicControls.toggle();
-  music.pause();
-  controls.noRotate = true;
-  portal.update(camera, environment, true, crossing.proper, axis);
-  try {
-    const result = await journey.travel(environment === 'home' ? 'deep' : 'home');
-    camera.position
-      .copy(portal.group.position)
-      .addScaledVector(
-        axis,
-        (result.recovered ? Math.sqrt(1 + crossing.startProper ** 2) : -Math.sqrt(257)) * 1.4,
-      );
-    controls.target.copy(
-      result.recovered
-        ? portal.group.position
-        : camera.position.clone().addScaledVector(axis, -100),
-    );
-    camera.lookAt(controls.target);
-    controls.update();
-    lastCrossing = {
-      origin: crossing.origin,
-      destination: result.active,
-      peakObserverSpeedC: crossing.peakBeta || 0,
-      recovered: !!result.recovered,
-    };
-    crossing = null;
-    metricPass.enabled = false;
-    renderPass.enabled = environment === 'home';
-    volumePass.enabled = environment === 'deep';
-    controls.noRotate = false;
-    fields.setActive(environment === 'deep');
-    history.replaceState(null, '', environment === 'home' ? '#system' : '#deep-space');
-    if (result.active === 'home' && savedViews.home?.musicPlaying)
-      await music.play().catch((error) => music.reportError(error));
-    synchronizeTextures();
-    return result;
-  } catch (error) {
-    crossing = null;
-    metricPass.enabled = false;
-    renderPass.enabled = true;
-    controls.noRotate = false;
-    showError('The destination could not load: ' + error.message);
-    return { error: error.message };
-  }
-}
-
 function updateOrbits() {
   for (const [id, data] of Object.entries(worldData)) {
     if (data.position) {
       bodies[id].group.position.fromArray(data.position);
       continue;
     }
-    const a = data.phase + (clocks.daysFor(id) / data.orbitPeriod) * Math.PI * 2;
     bodies[id].group.position
-      .set(
-        Math.cos(a) * data.distance,
-        Math.sin(a) * data.distance * Math.sin(data.inclination || 0),
-        Math.sin(a) * data.distance * Math.cos(data.inclination || 0),
-      )
+      .copy(orbitalOffset(data, clocks.daysFor(id)))
       .add(bodies[data.parent].group.position);
   }
-  if (environment === 'deep') return;
-  if (portal && !crossing) boundary.update(bodies, sky);
   planetIds.forEach((id, i) => {
     const p = bodies[id].group.position;
     occluders[i].set(p.x, p.y, p.z, bodies[id].radius);
@@ -649,6 +477,7 @@ function updateOrbits() {
 }
 
 function framingFactor(id, width = innerWidth, height = innerHeight) {
+  if (worldData[id]?.size) return volumeFraming(width, height);
   const tangent = Math.tan(THREE.MathUtils.degToRad(19));
   const distance =
     id === 'blackhole'
@@ -664,39 +493,29 @@ function framingFactor(id, width = innerWidth, height = innerHeight) {
 function overviewOffset(width = innerWidth, height = innerHeight) {
   // Fit the outer moon and its rings through their complete orbit, including
   // perspective foreshortening when they pass closer to the camera.
-  if (environment === 'deep') return new THREE.Vector3(0, 20, 125);
-  const extent = environment === 'home' ? 78 : 91;
+  const extent = 78;
   const distance = Math.max(
     240,
     extent / ((Math.tan(THREE.MathUtils.degToRad(19)) * width) / height),
   );
-  return (
-    environment === 'home' ? new THREE.Vector3(0.05, 0.52, 0.85) : new THREE.Vector3(0, 0.14, 1)
-  )
-    .normalize()
-    .multiplyScalar(distance);
+  return new THREE.Vector3(0.05, 0.52, 0.85).normalize().multiplyScalar(distance);
 }
 
 function positionAt(id, secondsAhead = 0) {
   if (id === 'sun') return new THREE.Vector3();
   const data = worldData[id];
   if (data.position) return new THREE.Vector3(...data.position);
-  const a = data.phase + (clocks.daysFor(id, secondsAhead) / data.orbitPeriod) * Math.PI * 2;
-  return new THREE.Vector3(
-    Math.cos(a) * data.distance,
-    Math.sin(a) * data.distance * Math.sin(data.inclination || 0),
-    Math.sin(a) * data.distance * Math.cos(data.inclination || 0),
-  ).add(positionAt(data.parent, secondsAhead));
+  return orbitalOffset(data, clocks.daysFor(id, secondsAhead)).add(
+    positionAt(data.parent, secondsAhead),
+  );
 }
 
 function viewOffset(id, position = bodies[id].group.position) {
   const data = worldData[id];
-  if (id === 'wormhole')
-    return new THREE.Vector3(0, 0.08, 1)
+  if (data.size)
+    return new THREE.Vector3(0.12, 0.35, 1)
       .normalize()
       .multiplyScalar(data.radius * framingFactor(id));
-  if (data.size)
-    return new THREE.Vector3(0.12, 0.35, 1).normalize().multiplyScalar(data.radius * 2.7);
   const direction = position.clone().negate().normalize();
   // A sunlit three-quarter view, with space beyond the limb.
   const tangent = new THREE.Vector3(-direction.z, 0, direction.x);
@@ -761,7 +580,6 @@ function planLift(f, id, overview) {
 }
 
 function navigate(id, overview = false) {
-  if (journey.busy) return Promise.resolve({ busy: true });
   if (!overview && !worldData[id]) return;
   controls.update();
   flight?.resolve?.({ canceled: true });
@@ -807,50 +625,13 @@ function frame(now) {
   const cpuStart = performance.now();
   if (devicePixelRatio !== previousViewport.pixelRatio) resize();
   const dt = lastFrame ? Math.min((now - lastFrame) / 1000, 0.05) : 0;
-  if (transitAnimation) {
-    const a = transitAnimation;
-    a.elapsed += dt;
-    const t = Math.min(1, a.elapsed / a.duration);
-    crossing.proper = THREE.MathUtils.lerp(a.start, a.end, t * t * (3 - 2 * t));
-    if (t === 1) {
-      transitAnimation = null;
-      a.resolve();
-    }
-  }
-  if (journey.busy) {
-    // 200 units of a/c per display second; maximum crossing speed < .04c.
-    const beta = dt
-      ? THREE.MathUtils.clamp(
-          (crossing.proper - (crossing.previousProper ?? crossing.proper)) / dt / 200,
-          -0.04,
-          0.04,
-        )
-      : 0;
-    crossing.previousProper = crossing.proper;
-    crossing.peakBeta = Math.max(crossing.peakBeta || 0, Math.abs(beta));
-    portal.uniforms.uBeta.value = beta;
-    fields.uniforms.uVolumeLod.value = 2;
-    fields.uniforms.uVolumeSteps.value = 48;
-    camera.position.copy(crossing.center).addScaledVector(crossing.axis, crossing.proper * 1.4);
-    camera.lookAt(camera.position.clone().addScaledVector(crossing.axis, -1));
-    portal.update(camera, crossing.origin, true, crossing.proper, crossing.axis);
-    portal.uniforms.uMouth.value.copy(crossing.center);
-    gpuTimer.begin(now);
-    composer.render();
-    gpuTimer.end();
-    updatePerformance(now, performance.now() - cpuStart);
-    lastFrame = now;
-    requestAnimationFrame(frame);
-    return;
-  }
-
   clocks.advance(dt, ['background', ...Object.keys(worldData)]);
   sky.position.copy(camera.position);
   sky.material.uniforms.uTime.value = clocks.times.background;
   updateOrbits();
   for (const [id, data] of Object.entries(worldData)) {
     const b = bodies[id];
-    if (id === 'wormhole' || b.volume) continue;
+    if (b.volume) continue;
     if (id === 'blackhole') {
       b.update(camera, clocks.times.blackhole, optimizer.level, optimizer.preferHD);
       continue;
@@ -905,8 +686,17 @@ function frame(now) {
         mode === 'system'
           ? 40
           : bodies[selected].radius *
-            (bodies[selected].volume ? 2.1 : selected === 'aurelia' ? 3.7 : 1.3);
-      controls.maxDistance = mode === 'system' ? Math.max(260, f.offset.length() * 1.4) : 180;
+            (bodies[selected].volume
+              ? framingFactor(selected) * 0.92
+              : selected === 'aurelia'
+                ? 3.7
+                : 1.3);
+      controls.maxDistance =
+        mode === 'system'
+          ? Math.max(260, f.offset.length() * 1.4)
+          : bodies[selected].volume
+            ? bodies[selected].radius * framingFactor(selected) * 1.5
+            : 180;
       controls.update();
       f.resolve?.({ selected, mode });
     }
@@ -920,7 +710,7 @@ function frame(now) {
   } else controls.update();
   sky.position.copy(camera.position);
   bodies.blackhole?.update(camera, clocks.times.blackhole, optimizer.level, optimizer.preferHD);
-  portal.update(camera, environment);
+  radiance.update(bodies, sky);
   fields.update(
     camera,
     optimizer.level,
@@ -961,6 +751,11 @@ function resize() {
       framingFactor(selected, previousViewport.width, previousViewport.height);
     if (flight) flight.offset.multiplyScalar(ratio);
     else camera.position.sub(controls.target).multiplyScalar(ratio).add(controls.target);
+    if (bodies[selected].volume) {
+      const distance = bodies[selected].radius * framingFactor(selected, w, h);
+      controls.minDistance = distance * 0.92;
+      controls.maxDistance = distance * 1.5;
+    }
   } else if (bodies.sun && mode === 'system') {
     const ratio =
       overviewOffset(w, h).length() /
@@ -982,8 +777,6 @@ function graphicsMemory(profile = effectiveProfile(), pixelRatio = resolutionSca
     textures.bytes() +
     extraTextureMemory +
     fields.bytes() +
-    boundary.bytes() +
-    (portal?.bytes() || 0) +
     (volumePass?.bytes() || 0) +
     6 * 1048576 +
     renderBufferBytes(innerWidth, innerHeight, pixelRatio, profile)
@@ -993,7 +786,6 @@ function graphicsMemory(profile = effectiveProfile(), pixelRatio = resolutionSca
 function synchronizeTextures() {
   if (
     !graphicsReady ||
-    journey.busy ||
     textures.busy ||
     contextLost ||
     textures.tier === optimizer.profile.textures
@@ -1044,8 +836,6 @@ function updatePerformance(now, cpuMs) {
     textures.peakBytes(next.textures) +
       extraTextureMemory +
       fields.bytes() +
-      boundary.bytes() +
-      (portal?.bytes() || 0) +
       (volumePass?.bytes() || 0) +
       6 * 1048576 +
       renderBufferBytes(innerWidth, innerHeight, nextRatio, next) <
@@ -1057,7 +847,7 @@ function updatePerformance(now, cpuMs) {
       frameMs: now - lastFrame,
       cpuMs,
       gpuMs: gpuTimer.value(now),
-      transitioning: textures.busy || journey.busy,
+      transitioning: textures.busy,
       canUpgrade,
     })
   )
@@ -1076,7 +866,6 @@ const raycaster = new THREE.Raycaster();
 let pointerStart = null;
 let pointerPosition = null;
 function pickWorld(x, y, tolerance = 9) {
-  if (journey.busy) return null;
   raycaster.setFromCamera(
     new THREE.Vector2((x / innerWidth) * 2 - 1, 1 - (y / innerHeight) * 2),
     camera,
@@ -1146,8 +935,7 @@ canvas.addEventListener('pointerup', (event) => {
   )
     return;
   const id = pickWorld(event.clientX, event.clientY, event.pointerType === 'touch' ? 19 : 9);
-  if (id === 'wormhole' && selected === id && mode === 'explore') void enterWormhole();
-  else if (id && (id !== selected || mode === 'system')) navigate(id);
+  if (id && (id !== selected || mode === 'system')) navigate(id);
 });
 canvas.addEventListener('pointermove', (event) => {
   pointerPosition = { x: event.clientX, y: event.clientY };
@@ -1183,16 +971,10 @@ canvas.addEventListener(
 );
 document.addEventListener('keydown', (event) => {
   if (event.ctrlKey || event.metaKey || event.altKey) return;
-  if (journey.busy) return;
-  if (event.key.toLowerCase() === 'b' && !event.repeat)
-    navigate(environment === 'home' ? 'blackhole' : 'wormhole');
-  if (event.key.toLowerCase() === 'w' && !event.repeat) navigate('wormhole');
-  if (
-    event.key === 'Enter' &&
-    !event.repeat &&
-    !['BUTTON', 'A', 'INPUT'].includes(event.target.tagName)
-  )
-    void enterWormhole();
+  if (event.key.toLowerCase() === 'b' && !event.repeat) navigate('blackhole');
+  if (event.key.toLowerCase() === 'g' && !event.repeat) navigate('galaxy');
+  if (event.key.toLowerCase() === 'n' && !event.repeat) navigate('nebula');
+  if (event.key.toLowerCase() === 'c' && !event.repeat) navigate('gas');
   if (event.key.toLowerCase() === 't' && !event.repeat && sky) {
     skyShimmer = !skyShimmer;
     sky.material.uniforms.uShimmer.value = skyShimmer ? 1 : 0;
@@ -1224,22 +1006,20 @@ function getState() {
     selected,
     mode,
     universe: {
-      ...journey.snapshot(),
-      loadedEnvironment: environment,
-      residentEnvironments: sky ? 1 : 0,
-      disposedResources,
-      raySteps: raySteps(optimizer.level),
-      volumes: fields.snapshot(),
-      volumeRender: volumePass?.snapshot(),
-      wormhole: {
-        lastCrossing,
-        metric: 'Ellis',
-        properDistance: crossing?.proper ?? null,
-        rayTable: '1024x193',
-        boundaryCacheMiB: Math.round(
-          (fields.bytes() + boundary.bytes() + portal.bytes()) / 1048576,
-        ),
+      active: 'main',
+      residentEnvironments: 1,
+      wormhole: false,
+      raySteps: bodies.blackhole.uniforms.uSteps.value,
+      blackHoleOrientation: bodies.blackhole.orientation.toArray(),
+      blackHoleOrbit: {
+        parent: 'kepler',
+        radius: worldData.blackhole.distance,
+        inclination: worldData.blackhole.inclination,
+        ascendingNode: worldData.blackhole.ascendingNode,
       },
+      volumes: fields.snapshot(),
+      modeledGalaxyStars: bodies.galaxy.group.children[1].geometry.attributes.position.count,
+      volumeRender: volumePass.snapshot(),
       renderTextures: renderer.info.memory.textures,
       renderGeometries: renderer.info.memory.geometries,
     },
@@ -1275,29 +1055,21 @@ function getState() {
     fps,
     lastJourney,
     music: { menuOpen: musicControls.open, ...music.getState() },
-    background: maps.sky
-      ? environment === 'home'
-        ? `NOIRLab all-sky photograph · ${maps.sky.image.width} × ${maps.sky.image.height} from 40000 × 20000 source`
-        : 'Three-dimensional stellar, dust, ionized-gas and molecular density fields'
-      : 'Three-dimensional stellar, dust, ionized-gas and molecular density fields',
+    background:
+      'NOIRLab photographic sky with three-dimensional galaxy, nebula and molecular cloud',
     skyShimmer,
-    skyEffect:
-      environment === 'deep'
-        ? 'World-space stellar emission and wavelength-dependent dust extinction'
-        : skyShimmer
-          ? 'Atmospheric observing treatment of existing photographic pixels; no moving dust or synthetic stars'
-          : 'Steady space view; photographic dust extinction and stellar colors',
+    skyEffect: skyShimmer
+      ? 'Optional atmospheric observing treatment of the photographic background'
+      : 'Steady photographic background',
     syntheticStars: scene.children.filter((object) => object.isPoints || object.isSprite).length,
   };
 }
-window.PLansi_xi = { navigate, getState, enterWormhole };
+window.PLansi_xi = { navigate, getState };
 
 // Structured access to the same exploration and simulation controls.
 if (document.modelContext?.registerTool) {
   const lifecycle = new AbortController();
-  const destinations = [
-    ...new Set([...Object.keys(homeWorlds), ...Object.keys(deepWorlds), 'system']),
-  ];
+  const destinations = [...Object.keys(worldData), 'system'];
   const register = (tool) => {
     try {
       Promise.resolve(document.modelContext.registerTool(tool, { signal: lifecycle.signal })).catch(
@@ -1320,7 +1092,7 @@ if (document.modelContext?.registerTool) {
     name: 'navigate_world',
     title: 'Fly to a world',
     description:
-      'Move the camera smoothly to Earth, Luna, Kepler X, Aurelia, the Hubble satellite, or the system overview. Returns after the visible camera journey finishes.',
+      'Move the camera smoothly to a planet, Hubble, the orbiting black hole, galaxy, nebula, molecular cloud, or the system overview. Volume approaches stay outside their bounds. Returns after the visible camera journey finishes.',
     inputSchema: {
       type: 'object',
       properties: { destination: { type: 'string', enum: destinations } },
@@ -1331,24 +1103,10 @@ if (document.modelContext?.registerTool) {
     execute: async (input) => {
       if (!input || !destinations.includes(input.destination))
         throw new TypeError('Unknown destination.');
-      if (input.destination !== 'system' && !worldData[input.destination])
-        throw new TypeError('That world is in the other universe. Cross the wormhole first.');
       await navigate(
         input.destination === 'system' ? selected : input.destination,
         input.destination === 'system',
       );
-      return getState();
-    },
-  });
-  register({
-    name: 'cross_wormhole',
-    title: 'Cross the wormhole',
-    description:
-      'Approach the Ellis throat beside the black hole and follow a metric ray-traced crossing into the other environment. The previous scene is disposed before the destination loads. Crossing again returns home.',
-    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
-    annotations: { readOnlyHint: false, untrustedContentHint: false },
-    execute: async () => {
-      await enterWormhole();
       return getState();
     },
   });
@@ -1407,8 +1165,6 @@ if (document.modelContext?.registerTool) {
     execute: async (input) => {
       if (!input || !musicActions.includes(input.action))
         throw new TypeError('Choose a valid music action.');
-      if (environment !== 'home' || journey.busy)
-        throw new TypeError('Hubble music resumes in the home universe.');
       if (input.action === 'toggle_menu') musicControls.toggle();
       if (input.action === 'play') await music.play();
       if (input.action === 'stop') music.stop();

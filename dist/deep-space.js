@@ -1,32 +1,8 @@
 import * as THREE from 'three';
 import { volumeResolution, volumeBytes } from './volume-density.js';
+import { spaceObjects } from './space-layout.js';
 
-export const deepWorlds = {
-  galaxy: {
-    name: 'Spiral galaxy',
-    radius: 55,
-    position: [-25, 6, -135],
-    size: [55, 14, 55],
-    rotation: [0.68, 0.12, -0.2],
-  },
-  nebula: {
-    name: 'Ionized nebula',
-    radius: 34,
-    position: [67, -12, -85],
-    size: [34, 29, 27],
-    rotation: [0.2, -0.3, 0.4],
-  },
-  gas: {
-    name: 'Molecular cloud',
-    radius: 33,
-    position: [-82, 23, -75],
-    size: [28, 34, 25],
-    rotation: [-0.3, 0.2, 0.1],
-  },
-  wormhole: { name: 'Ellis throat', radius: 1.4, position: [0, 0, 0] },
-};
-
-// The same world-space transfer function is used for ordinary and curved rays.
+// The same world-space transfer function is used for direct and lensed rays.
 export const volumeGLSL = `
 precision highp sampler3D;
 uniform sampler3D uGalaxyField,uNebulaField,uGasField;
@@ -41,9 +17,10 @@ vec2 boxInterval(vec3 ro,vec3 rd) {
   vec3 lo=min(a,b),hi=max(a,b);
   return vec2(max(0.0,max(lo.x,max(lo.y,lo.z))),min(hi.x,min(hi.y,hi.z)));
 }
-vec4 integrateField(sampler3D field,mat4 frame,vec3 origin,vec3 direction,int kind,int steps) {
+vec4 integrateField(sampler3D field,mat4 frame,vec3 origin,vec3 direction,int kind,int steps,float limit) {
   vec3 ro=(frame*vec4(origin,1.0)).xyz,rd=(frame*vec4(direction,0.0)).xyz;
   vec2 interval=boxInterval(ro,rd);
+  interval.y=min(interval.y,limit);
   if(interval.y<=interval.x) return vec4(0.0);
   float h=(interval.y-interval.x)/float(steps),localH=h*length(rd);
   float lod=min(uVolumeLod,max(0.0,log2(float(textureSize(field,0).x)/64.0)));
@@ -64,12 +41,10 @@ vec4 integrateField(sampler3D field,mat4 frame,vec3 origin,vec3 direction,int ki
   }
   return vec4(radiance,1.0-dot(T,vec3(.2126,.7152,.0722)));
 }
-vec3 deepRadiance(vec3 origin,vec3 direction) {
-  vec4 a=integrateField(uGalaxyField,uGalaxyFrame,origin,direction,0,uVolumeSteps);
-  vec4 b=integrateField(uNebulaField,uNebulaFrame,origin,direction,1,uVolumeSteps);
-  vec4 c=integrateField(uGasField,uGasFrame,origin,direction,2,uVolumeSteps);
-  return a.rgb+b.rgb+c.rgb;
-}`;
+vec4 integrateField(sampler3D field,mat4 frame,vec3 origin,vec3 direction,int kind,int steps) {
+  return integrateField(field,frame,origin,direction,kind,steps,1e8);
+}
+`;
 
 function textureFrom(data, size) {
   const texture = new THREE.Data3DTexture(data, size, size, size);
@@ -99,7 +74,7 @@ export class VolumeFields {
       uRefinePhase: { value: -1 },
       uRefineGrid: { value: 4 },
     };
-    for (const [id, data] of Object.entries(deepWorlds)) {
+    for (const [id, data] of Object.entries(spaceObjects)) {
       if (!data.size) continue;
       const frame = new THREE.Matrix4().compose(
         new THREE.Vector3(...data.position),
@@ -183,7 +158,7 @@ export class VolumeFields {
     );
     const plans = ['galaxy', 'nebula', 'gas']
       .map((id) => {
-        const d = deepWorlds[id],
+        const d = spaceObjects[id],
           center = new THREE.Vector3(...d.position);
         const visible = frustum.intersectsSphere(new THREE.Sphere(center, d.radius));
         const angularSize = d.radius / Math.max(1, camera.position.distanceTo(center));
@@ -216,12 +191,6 @@ export class VolumeFields {
         .finally(() => {
           this.pending = null;
         });
-  }
-  async boundaryOnly() {
-    this.setActive(false);
-    await this.pending;
-    for (const id of ['galaxy', 'nebula', 'gas'])
-      if (this.fields[id].size > 48) await this.generate(id, 48);
   }
   bytes() {
     return (
@@ -271,10 +240,15 @@ function stars(count, galaxy = false, refinement = {}) {
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geometry.setAttribute('aFlux', new THREE.BufferAttribute(brightness, 1));
+  geometry.computeBoundingSphere();
   const material = new THREE.ShaderMaterial({
     transparent: true,
     depthWrite: false,
-    blending: THREE.AdditiveBlending,
+    blending: THREE.CustomBlending,
+    blendSrc: THREE.SrcAlphaFactor,
+    blendDst: THREE.OneFactor,
+    blendSrcAlpha: THREE.ZeroFactor,
+    blendDstAlpha: THREE.OneFactor,
     uniforms: {
       ...refinement,
       uReference: { value: galaxy ? 200 : 1000 },
@@ -286,16 +260,12 @@ function stars(count, galaxy = false, refinement = {}) {
     fragmentShader: `precision highp sampler3D;uniform sampler3D uDust;uniform mat4 uDustFrame;uniform float uGalaxy;varying vec3 vColor,vStar;varying float vFlux;uniform float uRefinePhase,uRefineGrid;void main(){if(uRefinePhase>=0.0){float phase=mod(floor(gl_FragCoord.x),uRefineGrid)+uRefineGrid*mod(floor(gl_FragCoord.y),uRefineGrid);if(abs(phase-uRefinePhase)>.5)discard;}float r=length(gl_PointCoord-.5);float alpha=exp(-r*r*22.0);vec3 T=vec3(1.0);if(uGalaxy>.5){vec3 start=(uDustFrame*vec4(vStar,1.0)).xyz,end=(uDustFrame*vec4(cameraPosition,1.0)).xyz,step=(end-start)/24.0;float tau=0.0;for(int i=0;i<24;i++){vec3 p=start+step*(float(i)+.5);if(any(greaterThan(abs(p),vec3(1.0))))break;float lod=max(0.0,log2(float(textureSize(uDust,0).x)/64.0));float dust=textureLod(uDust,p*.5+.5,lod).a;tau+=dust*dust*length(step);}T=exp(-tau*vec3(5.8,8.0,11.0));}gl_FragColor=vec4(vColor*T*vFlux,alpha);}`,
   });
   const points = new THREE.Points(geometry, material);
-  points.frustumCulled = false;
   return points;
 }
 
-export function buildDeepSpace(scene, fields, bodies, surfaceObjects) {
-  scene.background = new THREE.Color(0x000002);
-  scene.add(stars(14000, false, fields.uniforms));
-  bodies.sun = { group: new THREE.Group(), radius: 0 };
+export function addSpaceVolumes(scene, fields, bodies, surfaceObjects) {
   for (const [index, id] of ['galaxy', 'nebula', 'gas'].entries()) {
-    const d = deepWorlds[id],
+    const d = spaceObjects[id],
       group = new THREE.Group();
     group.position.fromArray(d.position);
     group.rotation.set(...d.rotation);
@@ -324,8 +294,4 @@ export function buildDeepSpace(scene, fields, bodies, surfaceObjects) {
       group.add(population);
     }
   }
-  return {
-    position: new THREE.Vector3(),
-    material: { uniforms: { uTime: { value: 0 }, uShimmer: { value: 0 } } },
-  };
 }

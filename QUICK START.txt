@@ -14,13 +14,16 @@ this complete Windows copy. Use a browser with hardware acceleration enabled.
 Wait for the loading bar to disappear.
 
 EXPLORE
-Left-click a planet, moon, or Hubble: fly to it smoothly.
+Left-click a planet, moon, Hubble, galaxy or cloud: fly to it smoothly.
 Right-click: return to the system. Left-drag: rotate freely, without limits.
 Wheel up/down over an object: speed up/slow down ONLY its orbit and spin.
 Wheel over empty sky: change ONLY the background shimmer speed.
 Scroll down far enough to pause that target; scroll up to resume. No zoom.
 A child still follows its parent's position, with its own orbital rate.
-1 Earth, 2 Luna, 3 Kepler X, 4 Aurelia, 5 Hubble. Escape: system overview.
+1 Earth, 2 Luna, 3 Kepler X, 4 Aurelia, 5 Hubble, B/6 black hole.
+G galaxy, N nebula, C molecular cloud. Escape: system overview.
+The original black hole orbits Kepler X with a turning diagonal disk.
+Galaxy/cloud visits stay about 4.8 radii away, farther on portrait screens.
 T: shimmer / steady space photograph. H: open the instructions.
 Reload resets every animation rate to 1x.
 
@@ -37,12 +40,14 @@ All songs stay local and are excluded from Git automatically.
 Use headphones for Hubble's direction, echo, and planet-muffling effects.
 
 GRAPHICS
-Highest available textures and native display resolution are the defaults.
-There is no automatic quality reduction. Default sky: 16K; night/clouds: 8K.
-A lower GPU texture limit uses compatible 8K assets.
-For a smaller memory footprint, deliberately use:
+The live optimizer targets 60 FPS and adapts to measured load and memory.
+It restores detail after sustained headroom. Maximum sky: 16K; night/clouds: 8K.
+Highest mode starts at maximum detail with HD output and memory protection:
+http://127.0.0.1:4173/?quality=highest
+For a smaller texture ceiling with adaptation:
 http://127.0.0.1:4173/?quality=8k
-All background stars are photographed; no invented star particles.
+The panorama is photographic. The added galaxy and clouds are 3D matter.
+All objects share the main universe; there is no wormhole crossing.
 
 STOP / TROUBLESHOOT
 Close the terminal or press Ctrl+C there to stop.
@@ -63,6 +68,7 @@ docs/tutorial.md - illustrated first visit
 docs/website-guide.md - complete controls and graphics
 docs/music-player.md - playlist, mouse/keyboard controls, spatial sound
 docs/starlight-science.md - real observations and scientific scope
+docs/space-objects.md - black-hole optics, 3D matter and memory
 docs/architecture.md - code and maintenance
 docs/validation.md - checks performed
 docs/credits.md - imagery, engine, runtime, and research-image credits
