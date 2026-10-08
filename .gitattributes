@@ -1,0 +1,17 @@
+* text=auto eol=lf
+*.yml text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.jpg binary
+*.png binary
+*.glb binary
+*.wav binary
+*.exe binary
+dist/vendor/** -whitespace
+runtime/LICENSE.txt -whitespace

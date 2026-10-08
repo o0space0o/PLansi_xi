@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PLansi_xi — user guide and reference</title>
+  <style>
+    :root { color-scheme: dark; font: 16px/1.7 system-ui,sans-serif; background:#080e18; color:#e0e7ef; }
+    body { margin:0; }
+    header { padding:38px max(24px,calc((100vw - 1000px)/2)); background:#101c2b; }
+    header p { margin:0; color:#b6c7d9; }
+    nav { display:flex; flex-wrap:wrap; gap:12px 24px; margin-top:18px; }
+    a { color:#93cafa; text-underline-offset:3px; }
+    main { max-width:1000px; margin:auto; padding:20px 24px 70px; }
+    section { border-bottom:1px solid #263344; padding:20px 0 40px; scroll-margin-top:20px; }
+    h1,h2,h3 { color:#f3f6fa; line-height:1.3; }
+    h1 { font-size:2rem; } h2 { margin-top:32px; font-size:1.35rem; }
+    table { display:block; overflow-x:auto; border-collapse:collapse; width:100%; margin:20px 0; }
+    th,td { text-align:left; vertical-align:top; border:1px solid #304155; padding:10px 14px; }
+    th { background:#142335; } code,pre { background:#111e2d; border-radius:5px; }
+    code { padding:2px 5px; } pre { overflow-x:auto; padding:18px; } pre code { padding:0; }
+    img { display:block; max-width:100%; height:auto; margin:24px auto; border-radius:6px; }
+    li { margin:8px 0; } strong { color:#fff; }
+    @media print { :root { color-scheme:light; background:white; color:#111; } header,th { background:#eee; } h1,h2,h3,strong { color:#111; } a { color:#174f7c; } }
+  </style>
+</head>
+<body>
+  <header><h1>PLansi_xi</h1><p>Website instructions, hidden music controls, and a reusable implementation reference.</p><nav><a href="#tutorial">First visit</a><a href="#website">Website controls</a><a href="#music">Music player</a><a href="#science">Stars and dust</a><a href="#credits">Credits</a><a href="#architecture">Code reference</a><a href="#validation">Validation</a></nav><p><a href="http://127.0.0.1:4173/">Open the local observatory</a></p></header>
+  <main><section id="tutorial"><h1>PLansi_xi — first visit</h1>
+<h2>1. Open the system</h2>
+<p>Download or clone the complete <a href="https://github.com/o0space0o/PLansi_xi">PLansi_xi repository</a>. On Windows, double-click <strong>Start PLansi_xi.cmd</strong>. Keep the terminal open and allow the high-resolution textures to load. The website opens at <a href="http://127.0.0.1:4173">http://127.0.0.1:4173</a> with the whole system in view. No visible panels or labels appear.</p>
+<p>On macOS/Linux, install Node.js 24 or newer and run <code>node scripts/serve.mjs</code>. <strong>Guide.html</strong> opens offline if you want to read instructions before starting.</p>
+<h2>2. Visit Earth</h2>
+<p>Press <strong>1</strong>, or left-click Earth. The camera takes a continuous route toward it, then follows its orbit. Left-drag to inspect the surface from another angle. You can keep rotating through complete turns in any direction.</p>
+<p><img src="docs/screenshots/earth.jpg" alt="Earth in the actual application"></p>
+<p>Right-click to fly back. The number keys provide easy first-visit shortcuts when a moon or Hubble looks small in the overview: <strong>2</strong> Luna, <strong>3</strong> Kepler X, <strong>4</strong> Aurelia, <strong>5</strong> Hubble.</p>
+<h2>3. Change only the motion you point at</h2>
+<p>Point at Earth&#39;s visible surface and scroll <strong>up</strong>. Earth&#39;s orbit, surface rotation, and clouds accelerate. The other clocks stay unchanged. Scroll <strong>down</strong> repeatedly to slow or pause Earth; scroll up to resume.</p>
+<p>Now point at empty sky and scroll. This changes the speed of the photographic background shimmer independently. <strong>T</strong> switches it off/on. Pausing a moon stops its orbit around its parent, while its parent can still carry it through the system. Reload the page whenever you want all speeds reset to 1×.</p>
+<p>The wheel controls animation rather than zoom. Camera flight duration stays constant. The <a href="#website">complete controls reference</a> explains target selection and the 80× speed limit.</p>
+<h2>4. Inspect the ringed moon</h2>
+<p>Press <strong>4</strong> to visit Aurelia. Its rings have visible bands, gaps, and shadows on the moon. Scrolling over either the moon or its rings changes Aurelia&#39;s motion. It is an imagined moon, using lunar terrain as artwork.</p>
+<p><img src="docs/screenshots/aurelia.jpg" alt="Aurelia and rings in the actual application"></p>
+<h2>5. Listen from Hubble</h2>
+<p>Press <strong>5</strong> to visit NASA&#39;s Hubble model. Press the <strong>middle wheel button</strong> once (or <strong>M</strong>) to enter hidden music mode. Short-left-click to play. Scroll to change volume. Short-right-click to stop and rewind.</p>
+<p><img src="docs/screenshots/hubble.jpg" alt="Hubble in the actual application"></p>
+<p>Hold left for <strong>650 ms</strong> to select the next song; hold right to select the previous song. Middle-click again to leave the mode. Playback continues and the normal camera controls return. The camera is the listener, so the direction of Hubble and intervening worlds affect the cinematic radio sound. Try headphones.</p>
+<p>The GitHub download has <strong>no songs</strong>. Put your own files directly in <strong>Audio/</strong> and re-enter music mode to discover them. A file named <code>Words before sleep</code> is prioritized when present; other supported filenames follow in order. Songs are ignored by Git and stay local. <a href="#music">Full music-player instructions</a> include keyboard alternatives, formats, and troubleshooting.</p>
+<h2>6. Keep the best image</h2>
+<p>Highest available graphics are selected by default. The real sky panorama is <strong>16K</strong>, cloud/night maps are <strong>8K</strong>, and rendering uses native display density with multisample antialiasing. Quality does not decrease automatically when frame rate drops.</p>
+<p>For a smaller computer, deliberately select <a href="http://127.0.0.1:4173/?quality=8k">http://127.0.0.1:4173/?quality=8k</a>. This reduces sky/cloud/night asset sizes. Enable browser hardware acceleration if you see a black screen. The photographic sky has no invented star particles; <a href="#science">stars and dust</a> explains the optional observing effect and the limits of the visual simulation.</p>
+<p>Press <strong>H</strong> for the guide, <strong>Escape</strong> or right-click for the system, and <strong>Ctrl+C in the terminal</strong> when finished. When sharing the project, keep the complete repository folder together.</p>
+</section>
+<section id="website"><h1>Using PLansi_xi</h1>
+<h2>Start and stop</h2>
+<p>Keep the complete downloaded/cloned repository together. On Windows 10/11 x64 or ARM64, double-click <strong>Start PLansi_xi.cmd</strong>. It chooses the included official Node.js runtime, starts a loopback-only server, and opens your browser. Keep the terminal open. If necessary, visit <a href="http://127.0.0.1:4173">http://127.0.0.1:4173</a> yourself. Close the terminal or press <strong>Ctrl+C</strong> there to stop.</p>
+<p>On macOS/Linux, install Node.js 24 or newer, run <code>node scripts/serve.mjs</code>, and open the printed address. The checked-in browser modules and prepared assets need no build. For development, use <code>npm ci</code> to install the pinned tooling and regenerate the vendor bundle.</p>
+<p><a href="#tutorial">Follow the illustrated tutorial</a> for a first visit. <strong>Guide.html</strong> contains the documentation offline. Press <strong>H</strong> in the scene to open the online local guide.</p>
+<h2>Explore without a visible interface</h2>
+<table>
+<thead>
+<tr>
+<th>Input</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Left-click a planet, moon, or Hubble</td>
+<td>Smooth flight to it, then follow its orbit</td>
+</tr>
+<tr>
+<td>Right-click</td>
+<td>Smooth return to the entire system</td>
+</tr>
+<tr>
+<td>Left-drag</td>
+<td>Rotate freely, through unlimited complete turns</td>
+</tr>
+<tr>
+<td>Wheel up / down over a body</td>
+<td>Accelerate / slow its own orbit and spin</td>
+</tr>
+<tr>
+<td>Wheel up / down over empty sky</td>
+<td>Accelerate / slow the background shimmer</td>
+</tr>
+<tr>
+<td>1 / 2 / 3 / 4 / 5</td>
+<td>Select Earth / Luna / Kepler X / Aurelia / Hubble</td>
+</tr>
+<tr>
+<td>Escape</td>
+<td>Return to the system overview</td>
+</tr>
+<tr>
+<td>T</td>
+<td>Switch photographic shimmer / steady space view</td>
+</tr>
+<tr>
+<td>H</td>
+<td>Open instructions in a separate tab</td>
+</tr>
+<tr>
+<td>Middle button or M</td>
+<td>Enter or exit hidden music mode</td>
+</tr>
+</tbody></table>
+<h2>Point to control time</h2>
+<p>Place the pointer over the visible object you want to change, then scroll. Each planet, moon, and Hubble has its own clock. A planet&#39;s cloud rotation follows its clock too. The background has a separate shimmer clock; point away from the objects to change it. Rings belong to Aurelia, so scrolling over a ring changes Aurelia&#39;s clock.</p>
+<p>Every clock starts at 1×, with body motion based on 0.05 simulated days per real second. Scroll up to accelerate, down to slow, and far enough down to pause that target. Scroll up again to resume. The maximum is 80×. An Earth speed change does not change Luna or Hubble&#39;s orbit around Earth, although they still follow Earth&#39;s position. Likewise, a paused moon stays attached to its moving parent.</p>
+<p>Camera journeys keep their normal duration, and music keeps its original playback speed. Inside <strong>music mode</strong>, the wheel controls volume instead. Exit music mode to select worlds and rotate again. <a href="#music">Music-player guide</a>.</p>
+<p>The wider approach leaves space around each world. Trackball rotation can roll the view upside down when crossing a pole. Reloading restores the overview, every speed to 1×, and shimmer enabled. No labels, orbit lines, or control panels appear.</p>
+<h2>Graphics and background</h2>
+<p>Highest detail is the default: a <strong>16384 × 8192</strong> NOIRLab all-sky photograph, prepared from its 40000 × 20000 original, plus 8K cloud/night maps. Native display resolution and GPU-supported multisample antialiasing stay enabled; frame rate does not silently reduce quality. Smaller GPU texture limits select the compatible 8K sky. On a smaller computer, explicitly use <a href="http://127.0.0.1:4173/?quality=8k">http://127.0.0.1:4173/?quality=8k</a> for an 8K sky and 4K cloud/night maps.</p>
+<p>No extra star objects are rendered. The default subtle atmospheric shimmer changes light already photographed. Press <strong>T</strong> to use the steady photo expected from space. <a href="#science">The science reference</a> explains dust and twinkling using real observations. There is no texture-wide animation noise, blur, or moving dust wash.</p>
+<p>Earth and Luna use NASA imagery; Hubble uses NASA&#39;s textured model. Kepler X and Aurelia are fictional. Sizes and orbits are arranged for viewing rather than a measured astronomical system or N-body calculation. <a href="#credits">Full asset credits</a>.</p>
+<h2>Common issues</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Launcher cannot find its runtime</td>
+<td>Keep <code>runtime</code>, <code>dist</code>, <code>Audio</code>, and <code>scripts</code> beside the launcher; download the complete repository</td>
+</tr>
+<tr>
+<td>Blank or black scene</td>
+<td>Enable browser hardware acceleration and reload; read any error shown</td>
+</tr>
+<tr>
+<td>Page does not open</td>
+<td>Keep the terminal open and enter the printed local address</td>
+</tr>
+<tr>
+<td>Slow loading or low memory</td>
+<td>Select <code>?quality=8k</code>; close other graphics-heavy tabs</td>
+</tr>
+<tr>
+<td>Wheel changes volume / camera does not react</td>
+<td>Press M or middle-click to leave music mode</td>
+</tr>
+<tr>
+<td>Wrong object changes speed</td>
+<td>Place the pointer directly over its visible surface, or its rings for Aurelia</td>
+</tr>
+<tr>
+<td>Music is quiet or muffled</td>
+<td>Check volume and move to a clear line of sight to Hubble</td>
+</tr>
+<tr>
+<td>A song does not play</td>
+<td>Follow <a href="#music">music troubleshooting</a></td>
+</tr>
+</tbody></table>
+<p>If port 4173 is occupied, run <code>node scripts/serve.mjs --port 4174</code> using installed Node or the bundled architecture-specific executable, then use the new printed address. On Windows add <code>--open</code> to open the browser automatically.</p>
+</section>
+<section id="music"><h1>Hidden music player</h1>
+<p>Music comes from the Hubble satellite orbiting Earth. Headphones make its direction easier to hear. The music mode has no visible menu, keeping the scene clear.</p>
+<h2>Play your first song</h2>
+<ol>
+<li>Launch PLansi_xi and let the scene finish loading.</li>
+<li><strong>Press the middle mouse button</strong> (click the wheel), or press <strong>M</strong>.</li>
+<li>Put a supported song in <strong>Audio/</strong> if this is a new repository download.</li>
+<li><strong>Short left-click</strong> to play the first available song.</li>
+<li>Roll the wheel up or down to adjust volume.</li>
+<li>Middle-click again, or press M, to leave music mode. Playback continues while you explore.</li>
+</ol>
+<p>To stop, enter music mode again and short right-click. This stops playback, rewinds the song, and silences the reverb/echo output.</p>
+<h2>Controls inside music mode</h2>
+<table>
+<thead>
+<tr>
+<th>Mouse</th>
+<th>Action</th>
+<th>Keyboard alternative</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Short left click</td>
+<td>Play the current song</td>
+<td>Space toggles play/stop</td>
+</tr>
+<tr>
+<td>Short right click</td>
+<td>Stop and rewind</td>
+<td>Space toggles play/stop</td>
+</tr>
+<tr>
+<td>Hold left for at least 650 ms</td>
+<td>Next song</td>
+<td>Right arrow</td>
+</tr>
+<tr>
+<td>Hold right for at least 650 ms</td>
+<td>Previous song</td>
+<td>Left arrow</td>
+</tr>
+<tr>
+<td>Wheel up / down</td>
+<td>Increase / decrease volume</td>
+<td>Up / down arrow, 5% steps</td>
+</tr>
+<tr>
+<td>Middle click</td>
+<td>Exit music mode; keep playback running</td>
+<td>M or Escape</td>
+</tr>
+</tbody></table>
+<p>Each hold changes a track once. Releasing it does not also play/stop or select a planet. Switching songs keeps playing if playback was active; if stopped, it selects the track ready for your next play click. The playlist wraps at either end and advances when a song finishes. Volume starts at 60% and is bounded from 0% to 100%.</p>
+<p><strong>While music mode is active, camera clicks/dragging and animation-wheel controls are suspended.</strong> Exit with middle-click or M to restore them. Music playback speed is independent of the animation speed.</p>
+<h2>Add and organize songs</h2>
+<p>Put files directly in the project’s <strong><code>Audio</code></strong> folder, beside <code>dist</code> and <code>scripts</code>. Subfolders are not scanned. MP3, WAV, OGG, Opus, M4A, AAC, and FLAC filenames are accepted; their codecs must also be supported by your browser. PCM WAV and ordinary MP3 are straightforward choices.</p>
+<p>The GitHub repository contains <strong>no songs</strong>. Your existing local <code>Words before sleep.wav</code> and <code>The water answers.wav</code> stay on your computer. A file named <code>Words before sleep</code> is prioritized when present. Other songs are sorted by filename, including numeric order. Prefix filenames with <code>01</code>, <code>02</code>, and so on if you want a particular order after that first track. Audio files are ignored by Git automatically; only this folder&#39;s README is committed.</p>
+<p>The playlist refreshes on entering music mode and changing tracks, so adding a song does not require restarting the server. To refresh after adding files, exit and re-enter music mode. Avoid renaming or removing a file while it is playing; stop first and refresh afterwards. Playback streams from the local server, with seeking byte ranges, and contacts no external music service. Songs are excluded from the GitHub copy. User music retains its owner&#39;s rights.</p>
+<h2>Spatial sound</h2>
+<p>The camera is the listener and Hubble is the source. Stereo HRTF positioning, gentle distance attenuation, convolution reverb, and a filtered echo create the requested spacious effect. An intervening planet or moon reduces brightness and volume smoothly. Move the camera or wait for Hubble&#39;s orbit to clear the obstacle to hear the difference.</p>
+<p>This represents cinematic radio-style playback. Sound itself cannot propagate through vacuum. The effects are a listening treatment, independent of the scientific sky rendering.</p>
+<h2>Troubleshooting</h2>
+<ul>
+<li><strong>No sound:</strong> enter music mode and perform a real short left-click. Browsers require a user gesture to start audio. Check system/browser volume and increase player volume with the wheel.</li>
+<li><strong>Quiet, bass-heavy music:</strong> a globe may obstruct Hubble. Select Hubble with <strong>5</strong> outside music mode to inspect the source, or return to the system and rotate.</li>
+<li><strong>No songs:</strong> confirm the files are directly inside <code>Audio</code> in the project folder, then re-enter music mode.</li>
+<li><strong>One file fails:</strong> try PCM WAV or MP3. A supported extension does not guarantee that every codec inside it can be decoded. Browser developer-console warnings contain the playback error.</li>
+<li><strong>Camera controls seem broken:</strong> middle-click or press M to exit music mode.</li>
+<li><strong>Closing a browser tab stops music:</strong> playback belongs to that tab. Keep it open while listening.</li>
+</ul>
+</section>
+<section id="science"><h1>Photographic stars, dust, and apparent color</h1>
+<h2>What the observations show</h2>
+<p>The 3D scene uses the <a href="https://noirlab.edu/public/images/noirlab2430b/">NOIRLab all-sky photograph</a>, credited to NOIRLab/NSF/AURA/E. Slawik/M. Zamani. The original is 40000 × 20000 pixels. The supplied 16K and 8K versions are Lanczos3 resamples with quality-96, 4:4:4 JPEG encoding. Their stars, dust lanes, and base colors are photographed content, with no generated sky or added point/sprite objects.</p>
+<p><img src="docs/images/barnard-68-wavelengths.jpg" alt="ESO observations of Barnard 68 in six wavebands"></p>
+<p><strong>ESO, Barnard 68 in six wavebands.</strong> Compare the same field at 0.44 and 0.55 micrometres at the top left/middle with 1.25, 1.65, and 2.16 micrometres at the bottom. The dark region obscures visible light much more strongly; longer wavelengths reveal many background stars. This comparison supports wavelength-dependent dust extinction, rather than dust making arbitrary new colors. These are observations at different wavelengths, <strong>not successive frames showing the dust moving</strong>. <a href="https://www.eso.org/public/images/eso9934b/">Original image and explanation</a>. Credit: ESO; <a href="https://www.eso.org/public/outreach/copyright/">CC BY 4.0</a>.</p>
+<p><img src="docs/images/gaia-dust-map.png" alt="ESA Gaia map of interstellar dust"></p>
+<p><strong>Gaia&#39;s inferred interstellar-dust map.</strong> It shows how obscuration is distributed, especially along the Galactic plane. This is a scientific map with a descriptive color scale, <strong>not a true-color sky photograph</strong>. Its map colors must not be pasted into the scene as apparent stellar colors. <a href="https://www.esa.int/ESA_Multimedia/Images/2022/06/Gaia_map_of_interstellar_dust_in_the_Milky_Way">Original map and explanation</a>. Credit: ESA/Gaia/DPAC; T. E. Dharmawardena, Gaia group at MPIA; CC BY-SA 3.0 IGO. The downloaded map is unmodified.</p>
+<h2>Three separate mechanisms</h2>
+<table>
+<thead>
+<tr>
+<th>Mechanism</th>
+<th>What changes</th>
+<th>Treatment here</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Stellar spectrum</td>
+<td>Intrinsic color depends on the star&#39;s emitted spectrum</td>
+<td>Preserve the photograph&#39;s measured/photographically processed base colors</td>
+</tr>
+<tr>
+<td>Interstellar extinction</td>
+<td>Dust removes/scatters light, generally blue more strongly than red</td>
+<td>Preserve the dust already captured in the photograph; do not add a rapidly moving procedural veil</td>
+</tr>
+<tr>
+<td>Atmospheric scintillation</td>
+<td>Turbulent air changes the received light from an unresolved star; apparent brightness/color can fluctuate</td>
+<td>Optional subtle night-sky observing effect on existing photographic light regions</td>
+</tr>
+</tbody></table>
+<p><a href="https://www.eso.org/public/teles-instr/technology/adaptive_optics/">ESO explains</a> that atmospheric turbulence causes twinkling and that observing from space avoids this atmospheric distortion. <a href="https://cesar.esa.int/upload/201801/ism_booklet.pdf">ESA&#39;s interstellar-medium reference</a> explains extinction and reddening. A photograph alone cannot establish the timing or amplitude of a particular star&#39;s variation. No real-time measurements of these stars or dust motions are included.</p>
+<h2>Applying the pixel-color idea</h2>
+<p>Multiplying pixels is a useful rendering technique, but independent random RGB values per frame make digital noise rather than an astronomical mechanism. A dust transmission model would use, in linear light:</p>
+<pre><code class="language-text">observed RGB = incident RGB × exp(-optical-depth RGB)
+</code></pre>
+<p>Optical depth must stay nonnegative, and ordinary visible dust attenuation removes more blue than red. Dust already recorded in this photo must not be counted a second time. Therefore the former moving density volume has been removed from the runtime.</p>
+<p>For the requested visible night-sky feeling, the default instead uses a <strong>bounded atmospheric observing approximation</strong>. A response map is calculated from isolated bright regions of the actual photograph. Smooth brightness and warm/cool gains modulate the original linear RGB values. There is no UV displacement, no new emitted star light independent of the photograph, no changing random seed every frame, and no blanket tint of diffuse Milky Way dust. The same small region shares a phase so a photographed star varies coherently instead of dissolving into pixel grain.</p>
+<p>The response map uses a blurred copy only for offline local-contrast analysis; <strong>the displayed photograph is never blurred</strong>. Its red channel stores modulation strength, and the other channels store deterministic phase/frequency values. Source metadata accompanies the map. Multiplication preserves a black source pixel as black and cannot create a new star location.</p>
+<p><strong>Press T outside music mode</strong> to disable the observing treatment and see the steady photographic space view. Shimmer is enabled initially to match the requested animated sky. It is an aesthetic approximation of looking through Earth&#39;s atmosphere, not a claim that a camera in vacuum experiences the same flicker. Point at empty sky and scroll to control its independent animation clock, without altering any planetary or spacecraft motion.</p>
+<h2>Scope of the orbital scene</h2>
+<p>Earth, Luna, and Hubble have real imagery/models. Kepler X and its ringed moon are fictional, and the orbital arrangement uses prescribed paths and illustrative sizes/distances. This is a photorealistic visual explorer with several physical lighting approximations, rather than a validated N-body or spectroscopic simulation. Camera navigation, ring shadows, eclipses, and music behavior are documented separately in <a href="#architecture">the implementation reference</a>.</p>
+</section>
+<section id="credits"><h1>Imagery and credits</h1>
+<ul>
+<li><a href="https://noirlab.edu/public/images/noirlab2430b/">NOIRLab all-sky photo</a>: NOIRLab/NSF/AURA/E. Slawik/M. Zamani, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. The 40000 × 20000 photographic source is reduced locally to 16K and 8K with Lanczos3 and JPEG quality 96, without blur. Processing metadata is in <code>dist/assets/photographic-sky-source.json</code>.</li>
+<li><a href="https://svs.gsfc.nasa.gov/4851/">NASA Deep Star Maps 2020</a>: retained as source research in <code>original-assets/nasa-reference/</code>; not the rendered background. NASA SVS / Ernie Wright, based on Hipparcos-2, Tycho-2, Gaia DR2 and supporting catalogs.</li>
+<li><a href="https://science.nasa.gov/resource/hubble-space-telescope-3d-model/">NASA Hubble Space Telescope 3D model</a>: NASA Visualization Technology Applications and Development (VTAD). The high-detail GLB and acquisition metadata are in <code>dist/assets/models/</code>.</li>
+<li><a href="https://visibleearth.nasa.gov/collection/1484/blue-marble">NASA Blue Marble</a>: Earth surface, NASA Goddard / Reto Stöckli. Source: <code>https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73909/world.topo.bathy.200412.3x5400x2700.jpg</code>.</li>
+<li><a href="https://svs.gsfc.nasa.gov/4720/">NASA CGI Moon Kit</a>: LRO/LROC lunar color and LOLA elevation, NASA Scientific Visualization Studio / Ernie Wright. The 2019 4K TIFF was converted locally to JPEG. Aurelia reuses this terrain as fictional artwork with an icy color tint.</li>
+<li><a href="https://www.solarsystemscope.com/textures/">Solar System Scope / INOVE</a>: clouds and night lights, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Original 8K maps plus prepared 4K fallbacks. Earth normal and specular maps are bundled from <a href="https://github.com/mrdoob/three.js/tree/dev/examples/textures/planets">Three.js planet textures</a>.</li>
+<li><a href="https://www.tng-project.org/media/">IllustrisTNG media</a>: visual reference research. No TNG code, images, videos, or simulation datasets are included.</li>
+<li><a href="https://threejs.org/">Three.js</a>: MIT-licensed rendering engine; license included in <code>THREE-LICENSE.txt</code>.</li>
+<li><a href="https://nodejs.org/en/download">Node.js</a>: official portable Windows runtimes, verified against upstream SHA-256 checksums. Source metadata, checksums, and redistribution licenses are included in <code>runtime/</code>.</li>
+<li>Research-only observation images: <a href="https://www.eso.org/public/images/eso9934b/">ESO Barnard 68</a>, credit ESO, CC BY 4.0; <a href="https://www.esa.int/ESA_Multimedia/Images/2022/06/Gaia_map_of_interstellar_dust_in_the_Milky_Way">Gaia dust map</a>, credit ESA/Gaia/DPAC, CC BY-SA 3.0 IGO. These appear in the guide, not in the scene.</li>
+<li>Kepler X surface: generated with the built-in image generation tool, archived locally at <code>original-assets/planet-textures/kepler.png</code> and encoded at <code>dist/assets/kepler.jpg</code>. The final generation prompt is saved in the repository&#39;s <code>artwork-prompt.txt</code>. The tool returned 1774 × 887 despite the requested larger size; no additional surface resolution is claimed.</li>
+</ul>
+</section>
+<section id="architecture"><h1>PLansi_xi — implementation reference</h1>
+<h2>Project layout</h2>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>dist/</code></td>
+<td>Complete browser application; served without a build step</td>
+</tr>
+<tr>
+<td><code>dist/assets/</code></td>
+<td>Ready-to-use textures and source metadata</td>
+</tr>
+<tr>
+<td><code>dist/assets/models/</code></td>
+<td>NASA Hubble GLB with embedded PBR textures</td>
+</tr>
+<tr>
+<td><code>dist/vendor/</code></td>
+<td>Locally bundled Three.js modules and addons</td>
+</tr>
+<tr>
+<td><code>Audio/</code></td>
+<td>Local playlist; add music here</td>
+</tr>
+<tr>
+<td><code>runtime/</code></td>
+<td>Official portable Windows Node.js runtimes, checksums, and licenses</td>
+</tr>
+<tr>
+<td><code>scripts/</code></td>
+<td>Server, asset preparation, documentation, and validation tools</td>
+</tr>
+<tr>
+<td><code>docs/</code></td>
+<td>Design, behavior, and verification reference</td>
+</tr>
+<tr>
+<td><code>original-assets/</code></td>
+<td>Large source downloads retained for reprocessing</td>
+</tr>
+<tr>
+<td><code>artifacts/</code></td>
+<td>Local verification captures; not required to run</td>
+</tr>
+</tbody></table>
+<p><code>dist</code> is both source and the ready-to-run application. Do not edit bundled vendor files. <code>npm install</code> regenerates the two Three.js engine modules and 14 required addons through <code>scripts/vendor.mjs</code>, following their transitive local imports. Previous generated bundles are preserved in <code>original-assets</code>. The server exposes <code>dist</code>, an allowlisted audio streaming route, and the playlist route; it does not expose the rest of the project.</p>
+<p>The double-click launcher selects the official bundled x64/ARM64 runtime. <code>serve.mjs --port 4174</code> can select another loopback-only port. Running the package needs no npm install or build. Large textures are streamed from disk, and HEAD requests inspect file metadata without allocating their entire bodies. A loopback health route identifies an existing PLansi_xi server before the launcher reuses an occupied port. Contributors use the pinned development dependencies for asset preparation, Markdown-to-HTML guide generation, tests, and formatting.</p>
+<h2>Scene and camera</h2>
+<p><code>main.js</code> owns the scene, camera journeys, pointer selection, input, frame-rate diagnostics, and WebMCP access. <code>animation.js</code> owns six independent clocks: background, Earth, Luna, Kepler X, Aurelia, and Hubble. Prescribed circular orbits are nested: the star → Earth → Luna/Hubble; the star → Kepler X → Aurelia. World radii and orbital spacing are artistic, not a scale model.</p>
+<p>TrackballControls supports continuous rotations through the poles without a fixed world-up restriction. Navigation uses a quintic eased trajectory, predicts the target&#39;s orbital motion, and chooses an elevated route checked against nearby globes. Transporting the current camera-up direction avoids a sudden roll reset. The camera follows the selected moving body after arrival.</p>
+<p>Wheel animation speed ranges from paused to 80×. The wheel raycasts the current pointer position and changes only the hit object&#39;s clock; empty sky changes the background clock. Aurelia&#39;s rings select Aurelia. Each body&#39;s clock supplies its orbital phase, spin, and cloud motion; child positions add the parent&#39;s current position without inheriting its clock rate. Future camera positions recursively predict each ancestor using its independent clock. Camera travel duration and music speed remain unchanged. Reloading restores the system view and all rates to 1×.</p>
+<h2>Photographic sky and starlight</h2>
+<p><code>sky.js</code> renders the NOIRLab all-sky photograph inside a sphere centered on the camera. Its orientation is fixed, so camera translation produces no false nearby stellar parallax. Panorama UV coordinates come from each fragment&#39;s normalized direction. Analytic UV derivatives keep texture filtering continuous across longitude zero. <code>scripts/fetch-photo-sky.mjs</code> downloads the 40000 × 20000 source and prepares 16K and 8K versions with Lanczos3, quality 96, 4:4:4 JPEG. It applies no blur or generated image content. The source photograph can retain capture/stitching artifacts, especially near poles; these are not additional scene geometry.</p>
+<p>There are no added star meshes, particles, or sprites. The stars and nebulae are entirely photographic. <code>scripts/prepare-starlight.mjs</code> analyzes a 4096 × 2048 copy and identifies 2201 isolated bright photographic regions. A blurred analysis copy supplies local contrast; this blur is never applied to the displayed photograph. The generated RGBA response map stores weight, coherent phase, and frequency variation. Its metadata includes the source photo&#39;s SHA-256 hash.</p>
+<p>The fragment shader samples the photograph and response map at the same panorama coordinates. Existing linear RGB values receive bounded, smoothly varying multiplicative gains: brightness varies by at most 28%, while the red/blue gain varies by at most 14% around its base. Two smoothly combined oscillations give nonidentical timing per photographed region. There is no per-frame random noise, texture-coordinate displacement, or broad moving cloud tint. A black source pixel remains black. The shader renders one background sphere before foreground geometry, so it cannot overlay stars onto Earth or affect a planet&#39;s shading.</p>
+<p>This is an optional atmospheric observing treatment, not a measured turbulence or interstellar-dust simulation. The moving procedural density volume has been removed: real dust extinction is already captured in the photograph. <strong>T</strong> disables shimmer for the steady space view; <strong>H</strong> opens the instructions. Both work outside music mode. <a href="#science">The image comparison</a> documents the primary ESO/ESA sources and explains why random pixel colors or moving dust sheets would misrepresent the mechanism.</p>
+<p>GPUs with a texture limit of at least 16384 use the 16K sky and 8K night/cloud maps by default, regardless of reported system memory. Smaller GPU limits or an explicit <code>?quality=8k</code> select the 8K sky and 4K maps. Render resolution follows native device pixel density, including display-density changes on resize. The HDR composer target uses the GPU&#39;s supported maximum MSAA sample count; canvas antialiasing alone does not cover a postprocessed scene. Frame rate is measured without reducing resolution automatically.</p>
+<h2>Planet and ring lighting</h2>
+<p><code>shaders.js</code> combines the surface maps, relief normals, ocean specular response, city lights, cloud shadows, and atmosphere. <code>shadow-lighting.js</code> shares finite-disc eclipse geometry between the GLSL surfaces and spacecraft lighting. Overlap of the star&#39;s apparent angular disc with an occluder&#39;s disc produces full umbra, partial penumbra, and annular visibility.</p>
+<p>The ring&#39;s visible density and its shadow use the same radial bands, gaps, and edge fade. Transmission follows <code>exp(-opticalDepth / incidence)</code>. Nine samples over the luminous disc soften a ring shadow with distance. All globe, cloud, and atmosphere materials receive ring shadows when the geometry aligns; shadows are not restricted to Aurelia. A ring near Aurelia cannot shadow Earth when Earth is nowhere along its light ray. The ring uses view-dependent transparency and an approximate single-scattering reflection/transmission response.</p>
+<p>Research references: <a href="https://github.com/Stellarium/stellarium/blob/master/data/shaders/planet.frag">Stellarium&#39;s planet shader</a> and <a href="https://github.com/ivoyager/ivoyager_core/blob/master/shaders/rings.gdshader">I, Voyager&#39;s ring shader</a>. The local circle-overlap and optical-depth implementation was written for this project; these references were not imported as dependencies.</p>
+<h2>Hubble and satellite music</h2>
+<p><code>satellite.js</code> loads the <a href="https://science.nasa.gov/resource/hubble-space-telescope-3d-model/">NASA VTAD Hubble model</a>, including 11 meshes and 10 embedded textures. Physical metal materials reflect a PMREM derived from a 2048 × 1024 copy of the photographic sky. A 4096 × 4096 local shadow map (bounded by the GPU texture limit) provides spacecraft self-shadowing; analytic finite-star visibility supplies Earth eclipse shading. All mapped surfaces use the GPU&#39;s maximum anisotropic filtering. Earthshine and a low ambient fill retain readable detail. The model is enlarged for visibility and follows an illustrative circular Earth orbit.</p>
+<p><code>music-controls.js</code> owns the hidden input mode. Capture-phase handlers consume music inputs before camera controls. A 650 ms hold changes tracks once and suppresses the short-click action. Closing the mode cancels pending holds and releases pointer capture. Exiting the mode leaves playback running.</p>
+<p><code>music.js</code> creates the Web Audio graph only after playback is requested:</p>
+<pre><code class="language-text">HTML audio → low-pass → obstruction gain → HRTF panner
+                                      ├→ dry ────────────────┐
+                                      ├→ convolution reverb ─┤
+                                      └→ filtered delay ─────┤
+                                         ↖ feedback         │
+                                             master → compressor → output
+</code></pre>
+<p>The satellite is the panner&#39;s source; camera position and orientation define the listener. A sphere/segment intersection finds intervening planets and moons. Chord depth smoothly lowers cutoff from 20 kHz toward 650 Hz and reduces gain, with smoothed audio parameters to avoid clicks. The effect is cinematic, radio-inspired sound design: <a href="https://science.nasa.gov/ems/02_anatomy/">NASA explains that sound needs a medium</a>, so this is not literal sound propagation through vacuum. Music remains independent of the simulation clock.</p>
+<p><code>scripts/music-server.mjs</code> scans immediate files in <code>Audio</code>, prioritizes Words before sleep, and sorts the rest by filename. It supports byte ranges so large local tracks can stream and seek. Only recognized audio filenames are served; arbitrary paths and non-audio files are rejected. Playlist refresh happens on entry to music mode and track changes. Music never leaves the local computer.</p>
+<h2>Maintenance</h2>
+<ul>
+<li>Run <code>npm run check</code> for syntax, runtime references, actual texture sizes, response-map dimensions, and GLB structure.</li>
+<li>Run <code>npm test</code> for music input/streaming, audio obstruction, finite eclipses, photographic response registration, the complete browser-module graph, and runtime checksums.</li>
+<li><code>npm run format</code> / <code>npm run format:check</code> maintain consistent readable formatting. Vendor files and assets are excluded.</li>
+<li><code>npm run docs</code> regenerates <code>Guide.html</code> and <code>dist/help.html</code> from the Markdown references. The former opens offline; the latter is served by the website. Research images carry source/license metadata.</li>
+<li>Asset acquisition scripts record upstream sources. <code>fetch-photo-sky.mjs</code> regenerates the photographic sky; run <code>prepare-starlight.mjs</code> afterwards. <code>fetch-references.mjs</code> prepares the guide&#39;s observation images. <code>fetch-runtime.mjs</code> verifies portable Node.js against official upstream SHA-256 checksums. The NASA catalog-processing script writes to <code>original-assets/nasa-reference/</code> and does not replace the rendered sky.</li>
+<li>The GitHub repository contains the application, required vendor modules, prepared assets, both official Windows runtimes, documentation, and an Audio-folder README. <code>.gitignore</code> excludes all songs, dependency caches, original acquisition files, QA captures, and ZIP exports. Local music remains intact. Existing ZIP exports were removed. The repository is the reference copy.</li>
+<li>WebMCP tools mirror application actions: <code>get_observatory_state</code>, <code>navigate_world</code>, <code>adjust_animation_speed</code>, <code>control_satellite_music</code>. State includes the audio obstruction, output level, sky method, camera journey, and simulation clocks. No visible control panel is added.</li>
+</ul>
+</section>
+<section id="validation"><h1>PLansi_xi 1.1.0 — validation, 8 October 2026</h1>
+<h2>Automated checks</h2>
+<p><code>npm run check</code> validates application/server syntax, HTML asset references, local Three.js dependencies, actual texture dimensions, response-map dimensions, and the Hubble GLB. Verified sizes: Earth 5400 × 2700; Luna 4096 × 2048; clouds/night 8192 × 4096 with 4096 × 2048 fallbacks; Kepler 1774 × 887; photographic sky 16384 × 8192 and 8192 × 4096. The source is 40000 × 20000. Hubble contains 11 meshes and 10 embedded textures.</p>
+<p><code>npm test</code> passes thirteen behavioral checks:</p>
+<ol>
+<li>Middle-button mode switching without consuming normal scene clicks.</li>
+<li>Short play/stop clicks and suppressed music-mode context menu.</li>
+<li>Long next/previous holds without duplicate short actions.</li>
+<li>Cancelled holds on exit and wheel scope switching.</li>
+<li>Playlist discovery, audio byte ranges, and rejected arbitrary/non-audio paths.</li>
+<li>Full, partial, grazing, and clear sphere/segment audio obstruction.</li>
+<li>Full, partial, and annular finite-disc eclipses.</li>
+<li>Registration of the response map to the unchanged photo, with modulation restricted to bright photographic regions.</li>
+<li>Resolution of every transitive browser-module import within the local runtime bundle.</li>
+<li>Both portable Windows runtimes match the recorded official SHA-256 checksums.</li>
+<li>Each pointed body&#39;s speed adjustment affects only its own clock.</li>
+<li>Background pause/resume stays independent of body clocks and future orbit predictions.</li>
+<li>Rates stay within 0–80×, paused targets resume, and invalid inputs cannot corrupt clocks.</li>
+</ol>
+<p><code>npm run format:check</code> checks consistent formatting. Generated HTML, vendor files, binary assets, and archives are excluded. Both the ARM64 and x64 Node.js executables report v24.21.0 when run on this Windows machine.</p>
+<h2>Browser verification</h2>
+<p>The local in-app Chromium preview compiled the surface, atmosphere, ring, spacecraft, and photographic-shimmer shaders. The default selected the 16K sky, native pixel ratio 1, and 8 MSAA samples, with automatic resolution reduction disabled and no console warnings/errors. The observed frame rate was 60 FPS in the 974 × 884 viewport on this machine; this is an observation, not a guarantee for every device. The explicit 8K fallback also loaded successfully; its vendor PMREM shader reported a harmless tiny-constant precision warning, with no errors.</p>
+<p>After the independent-clock update, Earth, Luna, Kepler, Aurelia, and Hubble approaches completed over 238–240 frames each. The respective measured minimum globe clearances were 18.43, 5.41, 5.41, 10.77, and 6.98 scene units. Native pointer/wheel input separately verified Earth, empty sky, Luna, Kepler, Aurelia, Aurelia&#39;s rings, and Hubble targeting. A 0.15-page upward wheel action changed only its target rate from 1 to approximately 1.489×; reversing it restored 1×. Paused Hubble retained its own orbital phase while Earth continued moving. Earlier checks covered responsive framing and horizontal/vertical turns exceeding 900 degrees. Wider approach framing is retained.</p>
+<p>Native middle/left/right mouse input verified music entry, play, volume changes, stop/rewind, and exit while music continues. Both local WAV tracks decoded successfully. While in music mode, the wheel changed volume without changing the animation clock. Long holds were verified by real-timer automated input-handler tests; browser automation did not simulate a held native button.</p>
+<p>Moving the camera behind Earth produced obstruction 0.961 with Earth as the blocker. The low-pass settled to approximately 742 Hz; the clear view used 20 kHz. Output audio remained measurable. Stop reset playback time to zero and silenced the effect tails. The emitter&#39;s Earth orbit was checked at radius 4.9 scene units.</p>
+<p>The final sky uses only photographic stars, with zero Points/Sprite objects reported. Earth visually occludes the sky completely. The response map identifies 2201 isolated bright photographic regions; it supplies no new star geometry. The previous procedural dust volume is absent from the runtime.</p>
+<p>Two fixed-camera captures with <strong>T disabling shimmer</strong> had exactly zero changed pixels in a 233760-pixel sky-only strip. Two captures with shimmer enabled showed 1224 pixels changing by more than 8/255 in a channel, 439 red-minus-blue changes greater than 8/255, and a maximum channel change of 38/255. Most background pixels remained unchanged. This verifies the requested visible effect without blanket texture noise; it is not a measurement of real stellar variability. <code>scripts/compare-sky-captures.mjs</code> reproduces the image comparison from the local captures.</p>
+<p>The standalone HTML guide was inspected in the browser. Exploration/music tables were readable, navigation links reached their sections, and both research images loaded at their expected dimensions.</p>
+<h2>Practical limits</h2>
+<p>Ring and planetary shadows are analytic approximations for spherical occluders and a finite circular star. The rings use optical depth and a finite light-disc sample pattern rather than tracing individual ice particles. The optional shimmer is a bounded atmospheric observing approximation; the stable mode preserves the photographic space sky. Neither uses measured real-time stellar variations. Orbit sizes, spacecraft scale, moon sizes, and periods are illustrative. Audio occlusion is a cinematic effect based on solid globe geometry.</p>
+<p>The GitHub repository includes the runnable graphics, both official Windows runtimes, readable source, and offline instructions. <strong>All songs are excluded from Git</strong> and preserved locally; the committed Audio folder contains only its README. Large acquisition originals remain locally in <code>original-assets/</code> and are also excluded. Previous ZIP exports and checksum sidecars were removed.</p>
+<p><code>scripts/smoke-project.mjs</code> launches a standalone repository copy using its included runtime, without npm install or dependency caches. It checks the scene, illustrated guide, local engine/shaders, 16K/8K imagery, spacecraft model, playlist, and server HTTP handling. With local songs present it verifies byte-range streaming; <code>--no-audio</code> additionally requires an empty playlist for the public copy. A fresh copy of the staged public files passed with zero songs and no dependency installation. README and tutorial screenshots are actual browser captures, stored in <code>docs/screenshots/</code>; the generated local guide includes them.</p>
+</section></main>
+</body>
+</html>

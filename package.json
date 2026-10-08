@@ -1,0 +1,29 @@
+{
+  "name": "plansi-xi",
+  "version": "1.1.0",
+  "description": "PLansi_xi photographic orbital explorer with independent animation clocks and spatial satellite music",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/o0space0o/PLansi_xi.git"
+  },
+  "homepage": "https://github.com/o0space0o/PLansi_xi#readme",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "prepare": "node scripts/vendor.mjs",
+    "check": "node scripts/check.mjs",
+    "test": "node --test scripts/*.test.mjs",
+    "format": "prettier --write dist scripts docs Audio/README.md README.md package.json .prettierrc.json",
+    "format:check": "prettier --check dist scripts docs Audio/README.md README.md package.json .prettierrc.json",
+    "docs": "node scripts/build-guide.mjs"
+  },
+  "dependencies": {
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "marked": "18.1.0",
+    "prettier": "3.9.9",
+    "sharp": "0.35.5"
+  }
+}

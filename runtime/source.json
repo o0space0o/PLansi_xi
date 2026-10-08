@@ -1,0 +1,16 @@
+{
+  "version": "v24.21.0",
+  "source": "https://nodejs.org/dist/v24.21.0",
+  "architectures": {
+    "win-arm64": {
+      "path": "win-arm64/node.exe",
+      "sha256": "dff59da18b6ffe1bf1ca99e1d2af4906080c481740619f5b5098c0fca28bd9b7",
+      "bytes": 81881416
+    },
+    "win-x64": {
+      "path": "win-x64/node.exe",
+      "sha256": "ba4e6d110e8c1592a1ecd390f6b05f3da124b13871a5be62b341a07a853c6c32",
+      "bytes": 93580104
+    }
+  }
+}

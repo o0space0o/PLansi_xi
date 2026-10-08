@@ -1,0 +1,12 @@
+Built-in image_gen; no API/CLI fallback.
+Final project asset: dist/assets/kepler.png (1774 x 887), with JPEG copy dist/assets/kepler.jpg.
+
+Use case: scientific-educational
+Asset type: photorealistic 2:1 equirectangular albedo texture map for a Three.js sphere, fictional habitable exoplanet Kepler X.
+Primary request: Generate ONE flat full-width global surface map in exact 2:1 aspect ratio, preferably 3840 by 1920 pixels, filling every pixel edge to edge. Longitude runs continuously across the full width through 360 degrees, latitude from north pole at top to south pole at bottom. The left and right edges join seamlessly when wrapped onto a sphere. Correct equirectangular distortion: polar landforms stretch horizontally so they compress naturally onto a sphere; a subtle unbroken polar ice color at the very top and bottom edges.
+Subject: An alien but geologically plausible rocky ocean world. Deep dark desaturated teal oceans, several large irregular rugged mineral ochre and pale sandstone continents, intricate coastlines, scattered narrow peninsulas, volcanic archipelagos and inland dark lakes. Broad arid basins, fine branching geological erosion, rugged mountain chains, subtle pale ice caps. No recognizable Earth geography.
+Style/medium: High-detail realistic orbital geological surface imagery, neutral diffuse base color/albedo only, richly resolved small natural terrain color variation. Believable surface detail with no painted brush strokes.
+Color palette: Oceans nearly black desaturated deep teal, muted ochre and pale sandstone land with darker rock seams, restrained pale icy poles.
+Composition/framing: FLAT RECTANGULAR EQUIRECTANGULAR MAP ONLY. Complete spherical surface unwrap, directly overhead map view. No globe silhouette, no borders, no perspective, no horizon. Full-width land/ocean content continues naturally across left and right.
+Lighting: Uniform intrinsic surface albedo, absolutely no directional lighting, no highlights, no shading gradients, no cast shadows or day-night terminator. No lighting baked into the map. Terrain is indicated through material color and fine geology, not mountain cast shadows.
+Constraints: No clouds or atmospheric haze anywhere (clouds are a separate 3D layer), no stars, no space background, no rings, no text, no labels, no symbols, no grid, no watermark, no satellites, no spacecraft. Do not render a globe, a sphere, a landscape or a framed atlas. Single texture only.

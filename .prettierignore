@@ -1,0 +1,10 @@
+dist/vendor/
+dist/assets/
+dist/help.html
+node_modules/
+runtime/
+original-assets/
+artifacts/
+exports/
+package-lock.json
+scripts/*.ps1

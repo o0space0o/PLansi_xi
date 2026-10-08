@@ -1,0 +1,22 @@
+{
+  "title": "All-sky photo of the night sky",
+  "credit": "NOIRLab/NSF/AURA/E. Slawik/M. Zamani",
+  "page": "https://noirlab.edu/public/images/noirlab2430b/",
+  "url": "https://noirlab.edu/public/media/archives/images/large/noirlab2430b.jpg",
+  "license": "CC BY 4.0; https://noirlab.edu/public/copyright/",
+  "originalWidth": 40000,
+  "originalHeight": 20000,
+  "variants": [
+    {
+      "file": "milky-way-photo-16k.jpg",
+      "width": 16384,
+      "height": 8192
+    },
+    {
+      "file": "milky-way-photo-8k.jpg",
+      "width": 8192,
+      "height": 4096
+    }
+  ],
+  "processing": "Lanczos3 downsampling of the photographic full-sky source to 16K and 8K; JPEG quality 96, 4:4:4 chroma. No blur or generated sky content."
+}

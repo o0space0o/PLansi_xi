@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#03060b" />
+    <meta
+      name="description"
+      content="PLansi_xi: a local 3D orbital system under a real 16K Milky Way photograph. Click to approach, right-click to return, and scroll over a body or the sky to change its animation."
+    />
+    <title>PLansi_xi · Into the Milky Way</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2306090e'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%23b5d8eb'/%3E%3Cellipse cx='16' cy='16' rx='13' ry='4' fill='none' stroke='%23b5d8eb' stroke-width='1.5' transform='rotate(-32 16 16)'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="/style.css" />
+    <script type="importmap">
+      { "imports": { "three": "/vendor/three.module.js", "three/addons/": "/vendor/addons/" } }
+    </script>
+  </head>
+  <body>
+    <main id="observatory" aria-label="Interactive orbital system">
+      <canvas
+        id="space"
+        tabindex="0"
+        aria-label="Click a world or Hubble to approach. Right-click returns to the system. Scroll over an object or empty sky to control only its animation. Drag rotates freely. Middle click opens music mode."
+      ></canvas>
+      <div id="loading" role="status" aria-label="Loading the orbital system">
+        <div class="loading-track"><i id="loading-progress"></i></div>
+      </div>
+      <div id="error-panel" hidden role="alert">
+        <h1>Space needs a graphics context.</h1>
+        <p id="error-message"></p>
+        <button onclick="location.reload()">Try again</button>
+      </div>
+    </main>
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>

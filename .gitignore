@@ -1,0 +1,10 @@
+node_modules/
+artifacts/
+exports/
+Audio/*
+!Audio/README.md
+original-assets/
+dist/vendor-staging-*/
+*.log
+.env
+.env.*

@@ -1,0 +1,14 @@
+{
+  "source": "milky-way-photo-8k.jpg",
+  "width": 4096,
+  "height": 2048,
+  "sourceSha256": "349cef0b5376113e6b6cba6f9dee14e763ec754a9fa9e94773564bd95726cbc7",
+  "isolatedPhotographicRegions": 2201,
+  "channels": {
+    "R": "response weight",
+    "G": "constant phase per photographed region",
+    "B": "frequency variation per region",
+    "A": "opaque data"
+  },
+  "processing": "Local-contrast segmentation of existing photographic pixels. No new star positions, emitted light, or image warping."
+}

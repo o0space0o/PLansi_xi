@@ -1,0 +1,68 @@
+PLansi_xi - QUICK START
+
+WINDOWS 10/11, 64-BIT (x64 or ARM64)
+1. Download or clone the complete repository:
+   https://github.com/o0space0o/PLansi_xi
+2. Double-click Start PLansi_xi.cmd in the project folder.
+3. Keep the terminal open while using the website.
+4. Local address: http://127.0.0.1:4173
+5. Full instructions: http://127.0.0.1:4173/help.html
+
+The repository includes official portable Node.js runtimes and all graphics.
+No installation, API key, account, or internet connection is needed to run
+this complete Windows copy. Use a browser with hardware acceleration enabled.
+Wait for the loading bar to disappear.
+
+EXPLORE
+Left-click a planet, moon, or Hubble: fly to it smoothly.
+Right-click: return to the system. Left-drag: rotate freely, without limits.
+Wheel up/down over an object: speed up/slow down ONLY its orbit and spin.
+Wheel over empty sky: change ONLY the background shimmer speed.
+Scroll down far enough to pause that target; scroll up to resume. No zoom.
+A child still follows its parent's position, with its own orbital rate.
+1 Earth, 2 Luna, 3 Kepler X, 4 Aurelia, 5 Hubble. Escape: system overview.
+T: shimmer / steady space photograph. H: open the instructions.
+Reload resets every animation rate to 1x.
+
+MUSIC (HIDDEN MODE)
+Middle-click the wheel, or press M, to enter music mode.
+Short left click: play. Short right click: stop and rewind.
+Hold left for 650 ms: next song. Hold right: previous song.
+Wheel: volume. Middle-click again: exit, leaving music playing.
+Inside music mode: Space plays/stops, Left/Right changes tracks, Up/Down
+changes volume, Escape exits. Camera controls resume after exit.
+The GitHub repository contains no songs. Put your own files directly in Audio.
+Re-enter the mode to refresh. Words before sleep plays first when present.
+All songs stay local and are excluded from Git automatically.
+Use headphones for Hubble's direction, echo, and planet-muffling effects.
+
+GRAPHICS
+Highest available textures and native display resolution are the defaults.
+There is no automatic quality reduction. Default sky: 16K; night/clouds: 8K.
+A lower GPU texture limit uses compatible 8K assets.
+For a smaller memory footprint, deliberately use:
+http://127.0.0.1:4173/?quality=8k
+All background stars are photographed; no invented star particles.
+
+STOP / TROUBLESHOOT
+Close the terminal or press Ctrl+C there to stop.
+Black screen: enable browser hardware acceleration, then reload.
+Silence: enter music mode and short-left-click; check volume and Audio files.
+Camera stopped responding: middle-click or press M to leave music mode.
+For another port: runtime\win-x64\node.exe scripts\serve.mjs --port 4174 --open
+On ARM64 use runtime\win-arm64\node.exe instead.
+
+MAC / LINUX
+Install Node.js 24 or newer; run: node scripts/serve.mjs
+Open the printed address. No application build step is needed.
+
+DOCUMENTATION
+Guide.html - complete offline guide
+README.md - project overview, screenshots, and quick start
+docs/tutorial.md - illustrated first visit
+docs/website-guide.md - complete controls and graphics
+docs/music-player.md - playlist, mouse/keyboard controls, spatial sound
+docs/starlight-science.md - real observations and scientific scope
+docs/architecture.md - code and maintenance
+docs/validation.md - checks performed
+docs/credits.md - imagery, engine, runtime, and research-image credits
