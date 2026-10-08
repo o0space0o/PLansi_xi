@@ -1,7 +1,7 @@
 {
   "name": "plansi-xi",
-  "version": "1.1.0",
-  "description": "PLansi_xi photographic orbital explorer with independent animation clocks and spatial satellite music",
+  "version": "1.2.0",
+  "description": "PLansi_xi orbital explorer with relativistic optics, 3D matter fields and adaptive HD rendering",
   "repository": {
     "type": "git",
     "url": "https://github.com/o0space0o/PLansi_xi.git"

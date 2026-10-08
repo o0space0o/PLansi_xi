@@ -58,6 +58,16 @@ try {
     '/animation.js',
     '/graphics-policy.js',
     '/graphics-textures.js',
+    '/black-hole.js',
+    '/deep-space.js',
+    '/universe-lifecycle.js',
+    '/relativity.js',
+    '/wormhole.js',
+    '/volume-density.js',
+    '/volume-renderer.js',
+    '/volume-worker.js',
+    '/assets/ellis-rays.json',
+    '/assets/ellis-rays.bin',
     '/gpu-timer.js',
     '/sky.js',
     '/vendor/three.module.js',
@@ -75,6 +85,9 @@ try {
     '/guide-screenshots/earth.jpg',
     '/guide-screenshots/aurelia.jpg',
     '/guide-screenshots/hubble.jpg',
+    '/guide-screenshots/black-hole.jpg',
+    '/guide-screenshots/deep-space.jpg',
+    '/guide-screenshots/deep-space-oblique.jpg',
   ]) {
     const response = await fetch(base + path, { method: 'HEAD' });
     assert.equal(response.status, 200, path);

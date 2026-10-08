@@ -50,10 +50,13 @@ test('Memory budgets, unavailable hints, and explicit quality choices remain bou
   assert.equal(low.constrainMemory(memoryBudget(1) * 2, 5000), true);
   assert.equal(low.level, 5);
   assert.equal(low.constrainMemory(memoryBudget(1) * 2, 6000), false);
-  const fixed = new AdaptiveGraphics({ quality: 'highest' });
-  run(fixed, 0, 90, { frameMs: 50, gpuMs: 40 });
-  assert.equal(fixed.level, 0);
-  assert.equal(fixed.constrainMemory(Infinity, 91000), false);
+  const highest = new AdaptiveGraphics({ quality: 'highest', deviceMemory: 32 });
+  assert.equal(highest.level, 0);
+  assert.equal(highest.enabled, true);
+  assert.equal(highest.constrainMemory(Infinity, 5000), true);
+  run(highest, 5000, 20, { frameMs: 50, gpuMs: 40 });
+  assert.equal(highest.profile.scale, 1);
+  assert.ok(highest.level > 1);
 });
 
 test('Browser pacing is distinguished from measured slow work, with a timing fallback', () => {

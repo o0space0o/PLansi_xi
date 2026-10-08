@@ -1,6 +1,18 @@
 // Independent clocks keep a wheel adjustment local to the pointed object.
 // A child's orbit still follows its parent's position when the parent moves.
-export const animationTargets = ['background', 'earth', 'moon', 'kepler', 'aurelia', 'satellite'];
+export const animationTargets = [
+  'background',
+  'earth',
+  'moon',
+  'kepler',
+  'aurelia',
+  'satellite',
+  'blackhole',
+  'wormhole',
+  'galaxy',
+  'nebula',
+  'gas',
+];
 
 export class AnimationClocks {
   constructor(daysPerSecond = 0.05) {
@@ -13,10 +25,13 @@ export class AnimationClocks {
     if (!animationTargets.includes(id)) throw new TypeError('Unknown animation target.');
   }
 
-  advance(seconds) {
+  advance(seconds, targets = animationTargets) {
     if (!Number.isFinite(seconds) || seconds < 0)
       throw new TypeError('Use a positive finite time step.');
-    for (const id of animationTargets) this.times[id] += seconds * this.rates[id];
+    for (const id of targets) {
+      this.validateTarget(id);
+      this.times[id] += seconds * this.rates[id];
+    }
   }
 
   daysFor(id, secondsAhead = 0) {

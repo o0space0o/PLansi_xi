@@ -1,0 +1,10 @@
+{
+  "width": 1024,
+  "height": 193,
+  "boundary": 16,
+  "maxProperDistance": 64,
+  "accuracy": 0.035,
+  "maxEnergyError": 9.975688752827949e-8,
+  "metric": "Ellis a=1; RK4; float32 cos(phi),sin(phi),side,error",
+  "interpolation": "linear away from critical ray; analytic side classification; Euclidean exterior beyond 16a"
+}

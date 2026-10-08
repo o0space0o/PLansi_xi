@@ -1,5 +1,9 @@
 # Using PLansi_xi
 
+## Black hole and universe travel
+
+Press **B** to approach the black hole near Kepler X; **W** approaches the separate Ellis throat beside it. **Enter**, or a second click on the throat, crosses into the other environment. There, **1–3** approach the 3D galaxy, nebula and molecular cloud; **B/W** finds the return throat. Right-click/Escape shows the overview. No labels or crossing buttons appear in the universe view. [Physics and memory lifecycle](wormhole.md).
+
 ## Start and stop
 
 Keep the complete downloaded/cloned repository together. On Windows 10/11 x64 or ARM64, double-click **Start PLansi_xi.cmd**. It chooses the included official Node.js runtime, starts a loopback-only server, and opens your browser. Keep the terminal open. If necessary, visit <http://127.0.0.1:4173> yourself. Close the terminal or press **Ctrl+C** there to stop.
@@ -37,9 +41,9 @@ The wider approach leaves space around each world. Trackball rotation can roll t
 
 The default live optimizer targets **60 FPS**. It adjusts render resolution, MSAA, bloom, spacecraft shadow quality, and photographic texture sizes using measured frame/CPU time, asynchronous GPU timings where available, approximate device memory, and estimated graphics allocations. It lowers quality when rendering stays slow and restores detail after sustained headroom. The maximum sky is a **16384 × 8192** NOIRLab photograph, prepared from its 40000 × 20000 original; smaller devices use prepared 8K/4K/2K versions. Browser memory hints are approximate and may be unavailable; free GPU memory cannot be read directly.
 
-Use <http://127.0.0.1:4173/?quality=8k> to cap sky detail at 8K while keeping adaptation, <http://127.0.0.1:4173/?fps=30> for a 30 FPS target, or <http://127.0.0.1:4173/?quality=highest> for fixed maximum quality. Fixed highest mode can run slowly and use much more memory. Hidden tabs pause scene work; returning to the page resumes without treating the pause as poor performance.
+Use <http://127.0.0.1:4173/?quality=8k> to cap sky detail at 8K while keeping adaptation, <http://127.0.0.1:4173/?fps=30> for a 30 FPS target, or <http://127.0.0.1:4173/?quality=highest> for maximum initial detail with HD output and live memory protection. Volume resolution, ray samples and secondary effects follow the measured budget. Hidden tabs pause scene work; returning to the page resumes without treating the pause as poor performance.
 
-No extra star objects are rendered. The default subtle atmospheric shimmer changes light already photographed. Press **T** to use the steady photo expected from space. [The science reference](starlight-science.md) explains dust and twinkling using real observations. There is no texture-wide animation noise, blur, or moving dust wash.
+The home panorama has no extra star objects. The destination uses real 3D stellar positions and emissive density volumes with parallax. The default subtle atmospheric shimmer changes light already photographed. Press **T** to use the steady photo expected from space. [The science reference](starlight-science.md) explains dust and twinkling using real observations. There is no texture-wide animation noise, blur, or moving dust wash.
 
 Earth and Luna use NASA imagery; Hubble uses NASA's textured model. Kepler X and Aurelia are fictional. Sizes and orbits are arranged for viewing rather than a measured astronomical system or N-body calculation. [Full asset credits](credits.md).
 

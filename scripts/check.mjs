@@ -7,6 +7,17 @@ for (const file of [
   'dist/graphics-policy.js',
   'dist/graphics-textures.js',
   'dist/gpu-timer.js',
+  'dist/black-hole.js',
+  'dist/relativity.js',
+  'dist/deep-space.js',
+  'dist/universe-lifecycle.js',
+  'dist/volume-density.js',
+  'dist/volume-renderer.js',
+  'scripts/relativity.test.mjs',
+  'dist/volume-worker.js',
+  'dist/wormhole.js',
+  'scripts/prepare-wormhole.mjs',
+  'scripts/universe.test.mjs',
   'dist/shaders.js',
   'dist/shadow-lighting.js',
   'dist/sky.js',
@@ -56,6 +67,10 @@ for (const [name, minimumWidth] of Object.entries({
   console.log(`${name}: ${image.width} × ${image.height}`);
 }
 await access('dist/vendor/three.module.js');
+const rays = JSON.parse(await readFile('dist/assets/ellis-rays.json', 'utf8'));
+const table = await readFile('dist/assets/ellis-rays.bin');
+if (table.length !== rays.width * rays.height * 16 || rays.maxEnergyError > 1e-5)
+  throw new Error('Invalid Ellis geodesic table');
 const response = await sharp('dist/assets/starlight-response.png').metadata();
 if (response.width !== 4096 || response.height !== 2048)
   throw new Error('Invalid starlight response map.');

@@ -100,3 +100,8 @@ body {
     transition: none;
   }
 }
+
+/* The observatory remains a pure universe view, including while streaming. */
+#loading {
+  visibility: hidden;
+}

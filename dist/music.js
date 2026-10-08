@@ -163,12 +163,15 @@ export class SatelliteMusic {
     this.error = null;
     this.master.gain.setTargetAtTime(this.volume, this.context.currentTime, 0.035);
   }
-  stop() {
+  pause() {
     ++this.command;
     this.playing = false;
     this.audio.pause();
-    this.audio.currentTime = 0;
     if (this.master) this.master.gain.setTargetAtTime(0, this.context.currentTime, 0.02);
+  }
+  stop() {
+    this.pause();
+    this.audio.currentTime = 0;
   }
   async skip(direction) {
     if (direction !== 1 && direction !== -1) throw new TypeError('Choose next or previous.');

@@ -110,11 +110,12 @@ export function renderPixelRatio(
 
 export class AdaptiveGraphics {
   constructor({ deviceMemory, maxTextureSize = 16384, quality = 'auto', targetFps = 60 } = {}) {
-    this.enabled = quality !== 'highest';
+    this.enabled = true;
+    this.preferHD = quality === 'highest';
     this.targetFps = targetFps === 30 ? 30 : 60;
     this.budget = memoryBudget(deviceMemory);
     this.minimumLevel = quality === '8k' || maxTextureSize < 16384 || !(deviceMemory >= 8) ? 1 : 0;
-    this.level = this.enabled
+    this.level = !this.preferHD
       ? deviceMemory >= 8
         ? 1
         : deviceMemory >= 4
@@ -127,7 +128,9 @@ export class AdaptiveGraphics {
       : maxTextureSize >= 16384
         ? 0
         : 1;
-    this.reason = this.enabled ? 'startup memory budget' : 'fixed highest quality';
+    this.reason = this.preferHD
+      ? 'highest detail with live memory protection'
+      : 'startup memory budget';
     this.changes = 0;
     this.lastChange = -Infinity;
     this.upgradeAfter = 20000;
@@ -139,7 +142,7 @@ export class AdaptiveGraphics {
 
   get profile() {
     const profile = graphicsLevels[this.level];
-    return this.enabled ? profile : { ...profile, pixelCap: Infinity, samples: 8 };
+    return this.preferHD ? { ...profile, scale: 1, pixelCap: 2 } : profile;
   }
 
   reset(now) {

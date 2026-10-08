@@ -34,8 +34,9 @@ const variants = {
 const limits = { ultra: 16384, high: 8192, balanced: 4096, low: 2048 };
 const colorMaps = new Set(['sky', 'earth', 'moon', 'night', 'kepler']);
 
-export function texturePlan(tier, maxTextureSize) {
+export function texturePlan(tier, maxTextureSize, environment = 'home') {
   const limit = Math.min(limits[tier], maxTextureSize);
+  if (environment === 'deep') return {};
   return Object.fromEntries(
     Object.entries(variants).map(([name, choices]) => {
       const desired =
@@ -65,11 +66,13 @@ export function disposeTexture(texture) {
 }
 
 export class GraphicsTextures {
-  constructor(renderer, manager, maps, onReplace) {
+  constructor(renderer, manager, maps, onReplace, environment = 'home') {
     this.renderer = renderer;
     this.manager = manager;
     this.maps = maps;
     this.onReplace = onReplace;
+    this.environment = environment;
+    this.pending = null;
     this.files = {};
     this.tier = null;
     this.busy = false;
@@ -109,24 +112,42 @@ export class GraphicsTextures {
   }
 
   async initialize(tier, onProgress = () => {}) {
-    const plan = texturePlan(tier, this.renderer.capabilities.maxTextureSize);
+    this.controller = new AbortController();
+    const generation = this.generation;
+    const plan = texturePlan(tier, this.renderer.capabilities.maxTextureSize, this.environment);
     const initial = [
       ...Object.entries(plan).map(([name, [file]]) => [name, file]),
-      ...Object.entries({
-        normal: 'earth-bump.jpg',
-        specular: 'earth-specular.jpg',
-        moonHeight: 'moon-height.jpg',
-        kepler: 'kepler.jpg',
-      }),
+      ...Object.entries(
+        this.environment === 'deep'
+          ? {}
+          : {
+              normal: 'earth-bump.jpg',
+              specular: 'earth-specular.jpg',
+              moonHeight: 'moon-height.jpg',
+              kepler: 'kepler.jpg',
+            },
+      ),
     ];
     // Serial decodes keep startup peak memory bounded, especially for 16K.
     let loaded = 0;
     for (const [name, file] of initial) {
-      this.maps[name] = await this.load(name, file);
+      const next = await this.load(name, file, this.controller.signal);
+      if (generation !== this.generation) {
+        disposeTexture(next);
+        throw new DOMException('Aborted', 'AbortError');
+      }
+      this.maps[name] = next;
       this.files[name] = file;
+      // Upload one image per animation opportunity. During a crossing the
+      // metric view keeps rendering while the destination becomes GPU-ready.
+      if (typeof requestAnimationFrame === 'function')
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+      if (generation !== this.generation) throw new DOMException('Aborted', 'AbortError');
+      this.renderer.initTexture?.(next);
       onProgress(++loaded, initial.length);
     }
     this.tier = tier;
+    this.controller = null;
   }
 
   bytes() {
@@ -138,7 +159,7 @@ export class GraphicsTextures {
   }
 
   peakBytes(tier) {
-    const plan = texturePlan(tier, this.renderer.capabilities.maxTextureSize);
+    const plan = texturePlan(tier, this.renderer.capabilities.maxTextureSize, this.environment);
     let current = this.bytes(),
       peak = current;
     for (const [name, [file, width, height]] of Object.entries(plan)) {
@@ -155,7 +176,15 @@ export class GraphicsTextures {
     return peak;
   }
 
-  async transition(tier) {
+  transition(tier) {
+    if (this.pending) return this.pending;
+    this.pending = this.runTransition(tier).finally(() => {
+      this.pending = null;
+    });
+    return this.pending;
+  }
+
+  async runTransition(tier) {
     if (this.busy || this.tier === tier) return;
     this.busy = true;
     this.error = null;
@@ -163,7 +192,7 @@ export class GraphicsTextures {
     this.controller = new AbortController();
     try {
       for (const [name, [file]] of Object.entries(
-        texturePlan(tier, this.renderer.capabilities.maxTextureSize),
+        texturePlan(tier, this.renderer.capabilities.maxTextureSize, this.environment),
       )) {
         if (this.files[name] === file) continue;
         const next = await this.load(name, file, this.controller.signal);
@@ -215,5 +244,17 @@ export class GraphicsTextures {
   cancel() {
     this.generation++;
     this.controller?.abort();
+  }
+
+  async dispose() {
+    this.cancel();
+    await this.pending;
+    for (const [name, texture] of Object.entries(this.maps)) {
+      disposeTexture(texture);
+      delete this.maps[name];
+    }
+    this.files = {};
+    this.tier = null;
+    this.controller = null;
   }
 }

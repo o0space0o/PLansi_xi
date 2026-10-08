@@ -1,6 +1,6 @@
 # PLansi_xi
 
-A local Three.js space explorer with photographic planetary textures, a real **16K Milky Way panorama**, continuous camera flights, and music transmitted from an orbiting NASA Hubble model. The scene stays clear of labels and control panels.
+A local Three.js space explorer with photographic planetary textures, a real **16K Milky Way panorama**, continuous camera flights, and music transmitted from an orbiting NASA Hubble model. A compact Schwarzschild black hole near Kepler X sits beside a hypothetical Ellis wormhole. A continuous camera crossing leads to a three-dimensional spiral galaxy, ionized nebula and molecular cloud, with adaptive density streaming.
 
 **[Live website — o0space0o.app](https://o0space0o.app/)**
 
@@ -16,7 +16,7 @@ Explore online, or follow the steps below to run locally and play your own songs
 2. On **Windows 10/11 x64 or ARM64**, double-click **Start PLansi_xi.cmd**.
 3. Keep the terminal open. The browser opens at **<http://127.0.0.1:4173>**.
 
-The repository includes local graphics assets, Three.js modules, and verified official Node.js 24.21.0 LTS Windows runtimes. No installation, account, API key, or internet connection is needed to run the complete Windows checkout. Use a current browser with **hardware acceleration enabled** and wait for the loading bar to disappear.
+The repository includes local graphics assets, Three.js modules, and verified official Node.js 24.21.0 LTS Windows runtimes. No installation, account, API key, or internet connection is needed to run the complete Windows checkout. Use a current browser with **hardware acceleration enabled** and wait for the scene to appear.
 
 On macOS or Linux, install Node.js 24 or newer, run `node scripts/serve.mjs`, and open the printed address. **Guide.html** opens offline; press **H** in the scene to open the website guide. Close the terminal or press **Ctrl+C** there to stop.
 
@@ -38,6 +38,14 @@ On macOS or Linux, install Node.js 24 or newer, run `node scripts/serve.mjs`, an
 Every target starts at **1×**. Enough downward scrolling pauses that target; scrolling upward resumes it. Rates are bounded at **80×**. Pausing Earth still lets Luna and Hubble orbit it; a paused moon is still carried through space by its moving parent. The wheel does not zoom or alter camera flight duration or music playback speed. Reloading restores all defaults.
 
 ![Aurelia and its banded rings](docs/screenshots/aurelia.jpg)
+
+## Cross the wormhole
+
+Press **B** to approach the black hole, **W** to approach the adjacent wormhole, then **Enter** or click the throat again to cross. In the destination, **1–3** or a click approach the galaxy, nebula and molecular cloud within bounded viewing distances. Right-click/Escape returns to the overview. The universe view has no labels or controls.
+
+The camera moves through proper distance in an Ellis metric. Curved rays sample world-space density fields; there is no screen-image warp or animated tunnel overlay. At the throat, the application releases the previous full environment before loading the next. Small boundary representations keep both sides visible. Inactive orbital clocks pause; animation rates and local music position survive. All runtime data is local.
+
+The Schwarzschild optics include the critical shadow, a disk outside the ISCO, gravitational redshift and Doppler beaming. The wormhole is a separate hypothetical metric: entering a real black-hole horizon does not lead back out. Galaxy/gas fields are physically motivated models with normalized optical units, not a measured TNG snapshot or cosmological evolution. [Equations, assumptions and limits](docs/wormhole.md).
 
 ## Play music from Hubble
 
@@ -71,9 +79,9 @@ Headphones reveal Hubble's position, spacious reverb, echo, and smooth muffling 
 
 The default chooses a starting quality from approximate device memory and GPU limits, then responds to measured performance and estimated texture/render-buffer memory. Browsers do not expose free GPU memory, so these are conservative estimates, not an exact VRAM reading. No visible graphics panel is added.
 
-Use **<http://127.0.0.1:4173/?quality=8k>** to cap photographic detail at 8K while keeping adaptation, **<http://127.0.0.1:4173/?fps=30>** for a lower frame-rate target, or **<http://127.0.0.1:4173/?quality=highest>** to keep maximum supported assets, native density, and up to 8 MSAA samples fixed. Fixed highest mode can use substantially more memory and run slowly. GPU dimension limits still apply.
+Use **<http://127.0.0.1:4173/?quality=8k>** to cap photographic detail at 8K while keeping adaptation, **<http://127.0.0.1:4173/?fps=30>** for a lower frame-rate target, or **<http://127.0.0.1:4173/?quality=highest>** to start at maximum detail while preserving HD output and keeping memory protection active. The optimizer adjusts integration samples, MSAA, bloom, shadows and textures; visible volume density detail remains high within the memory budget. GPU dimensions and allocation safety still bound output; a software GPU cannot guarantee 60 FPS.
 
-**Background stars are photographed, not invented.** Optional smooth brightness/color gains affect only existing isolated bright photographic regions, with no added star particles, moving dust sheet, or blanket flicker. Rapid night-sky twinkling is an atmospheric effect; interstellar dust extinction is already recorded in the photo. Press **T** for the steadier view expected from space. [Real-image comparisons and scientific explanation](docs/starlight-science.md).
+**Home background stars are photographed.** Optional smooth brightness/color gains affect only existing isolated bright photographic regions, with no added home-sky star particles, moving dust sheet, or blanket flicker. Rapid night-sky twinkling is an atmospheric effect; interstellar dust extinction is already recorded in the photo. Press **T** for the steadier view expected from space. The destination uses modeled 3D stellar positions and density fields. [Real-image comparisons and scientific explanation](docs/starlight-science.md).
 
 Earth and Luna use real imagery. **Kepler X and Aurelia are imagined worlds**; Kepler's generated surface is 1774 × 887. The orbital arrangement, sizes, and distances are illustrative, and the application uses prescribed circular orbits rather than an N-body physics calculation. It is a photographic visual simulation, not a measured astronomical system. Rendering runs on the GPU through WebGL 2.
 
@@ -105,7 +113,7 @@ The [GitHub validation workflow](.github/workflows/validate.yml) runs the same c
 
 - Project renamed to **PLansi_xi** throughout the application, launcher, package, diagnostics, and documentation.
 - Scroll speed now targets the object under the pointer, with independent body and sky clocks.
-- Live adaptive graphics balances measured frame time and estimated memory, with automatic detail recovery and a fixed highest-quality option.
+- Live adaptive graphics balances measured frame time and estimated memory, with automatic detail recovery including highest mode with live memory protection.
 - Illustrated tutorial, full music instructions, and reusable technical documentation included.
 - Previous ZIP exports removed. This repository is the shareable project reference.
 

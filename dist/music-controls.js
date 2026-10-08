@@ -6,6 +6,7 @@ export class MusicControls {
     this.music = music;
     this.onMode = onMode;
     this.open = false;
+    this.enabled = true;
     this.press = null;
     const consume = (event) => {
       event.preventDefault();
@@ -117,6 +118,7 @@ export class MusicControls {
     }
   }
   toggle() {
+    if (!this.enabled) return this.open;
     this.cancel();
     this.open = !this.open;
     this.canvas.style.cursor = this.open ? 'default' : 'grab';
