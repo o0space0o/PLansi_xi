@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { volumeResolution, volumeBytes } from './volume-density.js';
 import { spaceObjects } from './space-layout.js';
 
-// The same world-space transfer function is used for direct and lensed rays.
+// World-space emission and absorption integrated along viewing rays.
 export const volumeGLSL = `
 precision highp sampler3D;
 uniform sampler3D uGalaxyField,uNebulaField,uGasField;

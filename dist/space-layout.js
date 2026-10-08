@@ -40,19 +40,3 @@ export function orbitalOffset(data, days) {
   if (data.ascendingNode) point.applyAxisAngle(new THREE.Vector3(0, 1, 0), data.ascendingNode);
   return point;
 }
-
-export function diskOrientation(time) {
-  // Prescribed disk precession/nutation, independent of the spherical metric.
-  const axis = new THREE.Vector3(0.37, 0.81, 0.45).normalize();
-  return new THREE.Quaternion()
-    .setFromAxisAngle(axis, time * 0.022)
-    .multiply(
-      new THREE.Quaternion().setFromEuler(
-        new THREE.Euler(
-          0.3 + Math.sin(time * 0.017) * 0.8,
-          time * 0.013,
-          0.32 + Math.sin(time * 0.011) * 0.6,
-        ),
-      ),
-    );
-}

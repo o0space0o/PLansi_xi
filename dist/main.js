@@ -13,8 +13,6 @@ import {
 } from './graphics-policy.js';
 import { GraphicsTextures } from './graphics-textures.js';
 import { GpuTimer } from './gpu-timer.js';
-import { createBlackHole } from './black-hole.js';
-import { SpaceRadiance } from './space-radiance.js';
 import { addSpaceVolumes, VolumeFields } from './deep-space.js';
 import { spaceObjects, volumeFraming, orbitalOffset } from './space-layout.js';
 import { VolumeRenderPass } from './volume-renderer.js';
@@ -115,7 +113,6 @@ composer.addPass(bloom);
 composer.addPass(new OutputPass());
 let volumePass;
 const fields = new VolumeFields(renderer);
-const radiance = new SpaceRadiance();
 
 const homeWorlds = {
   // Distances/radii are illustrative scene units; periods are simulated days.
@@ -155,16 +152,6 @@ const homeWorlds = {
     orbitPeriod: 1.7,
     phase: 1.9,
     inclination: 0.4,
-  },
-  blackhole: {
-    name: 'Schwarzschild black hole',
-    radius: 1.05,
-    parent: 'kepler',
-    distance: 28,
-    orbitPeriod: 950,
-    phase: 4.8,
-    inclination: 0.7,
-    ascendingNode: 0.82,
   },
 };
 const worldData = { ...homeWorlds, ...spaceObjects };
@@ -209,7 +196,7 @@ const musicControls = new MusicControls(canvas, music, (open) => {
     'aria-label',
     open
       ? 'Music mode. Left click plays, right click stops. Hold left for next track, hold right for previous. Wheel adjusts volume. Middle click exits.'
-      : 'Click a planet, Hubble, galaxy or cloud to approach. B approaches the orbiting black hole. G, N and C visit the galaxy, nebula and molecular cloud at a safe distance. Right-click returns to the overview. Drag rotates freely. Middle click opens music mode.',
+      : 'Click a planet, Hubble, galaxy or cloud to approach. G, N and C visit the galaxy, nebula and molecular cloud at a safe distance. Right-click returns to the overview. Drag rotates freely. Middle click opens music mode.',
   );
 });
 const manager = new THREE.LoadingManager();
@@ -284,15 +271,14 @@ try {
   });
   textureLoadingComplete = true;
   await fields.initialize();
-  radiance.bind(maps);
   buildScene();
   addSpaceVolumes(volumeScene, fields, bodies, surfaceObjects);
   volumePass = new VolumeRenderPass(volumeScene, camera, fields, optimizer.preferHD, () =>
     Object.entries(bodies)
       .filter(([, body]) => !body.volume)
-      .map(([id, body]) => ({
+      .map(([, body]) => ({
         position: body.group.position,
-        radius: id === 'blackhole' ? (body.radius * 15) / (Math.sqrt(27) / 2) : body.radius,
+        radius: body.radius,
       })),
   );
   composer.insertPass(volumePass, 1);
@@ -437,13 +423,6 @@ function buildScene() {
   moon.tilt.add(ring);
   moon.ring = ring;
   surfaceObjects.push(ring);
-  addBlackHole();
-}
-
-function addBlackHole() {
-  bodies.blackhole = createBlackHole(maps, worldData.blackhole.radius, radiance, fields);
-  scene.add(bodies.blackhole.group);
-  surfaceObjects.push(bodies.blackhole.surface);
 }
 function measureSatelliteTextures() {
   const images = new Set();
@@ -480,13 +459,11 @@ function framingFactor(id, width = innerWidth, height = innerHeight) {
   if (worldData[id]?.size) return volumeFraming(width, height);
   const tangent = Math.tan(THREE.MathUtils.degToRad(19));
   const distance =
-    id === 'blackhole'
-      ? Math.max(7.8, (12 * height) / (2 * tangent * width * 0.9))
-      : id === 'kepler'
-        ? Math.max(9, (5 * height) / (tangent * width * 0.88))
-        : id === 'aurelia'
-          ? Math.max(9.3, (5.7 * height) / (2 * tangent * width * 0.86))
-          : Math.max(3.8, height / (tangent * width * 0.88));
+    id === 'kepler'
+      ? Math.max(9, (5 * height) / (tangent * width * 0.88))
+      : id === 'aurelia'
+        ? Math.max(9.3, (5.7 * height) / (2 * tangent * width * 0.86))
+        : Math.max(3.8, height / (tangent * width * 0.88));
   return distance * 2;
 }
 
@@ -632,10 +609,6 @@ function frame(now) {
   for (const [id, data] of Object.entries(worldData)) {
     const b = bodies[id];
     if (b.volume) continue;
-    if (id === 'blackhole') {
-      b.update(camera, clocks.times.blackhole, optimizer.level, optimizer.preferHD);
-      continue;
-    }
     const bodyDays = clocks.daysFor(id);
     if (id === 'satellite') {
       updateSatellite(b, bodies, bodyDays);
@@ -709,8 +682,6 @@ function frame(now) {
     controls.update();
   } else controls.update();
   sky.position.copy(camera.position);
-  bodies.blackhole?.update(camera, clocks.times.blackhole, optimizer.level, optimizer.preferHD);
-  radiance.update(bodies, sky);
   fields.update(
     camera,
     optimizer.level,
@@ -971,7 +942,6 @@ canvas.addEventListener(
 );
 document.addEventListener('keydown', (event) => {
   if (event.ctrlKey || event.metaKey || event.altKey) return;
-  if (event.key.toLowerCase() === 'b' && !event.repeat) navigate('blackhole');
   if (event.key.toLowerCase() === 'g' && !event.repeat) navigate('galaxy');
   if (event.key.toLowerCase() === 'n' && !event.repeat) navigate('nebula');
   if (event.key.toLowerCase() === 'c' && !event.repeat) navigate('gas');
@@ -981,7 +951,7 @@ document.addEventListener('keydown', (event) => {
   }
   if (event.key.toLowerCase() === 'h' && !event.repeat) window.open('/help.html', 'plansi-xi-help');
   if (event.key === 'Escape') navigate(selected, true);
-  if (/^[1-6]$/.test(event.key)) navigate(Object.keys(worldData)[Number(event.key) - 1]);
+  if (/^[1-5]$/.test(event.key)) navigate(Object.keys(homeWorlds)[Number(event.key) - 1]);
 });
 
 // Read-only diagnostics used to verify local rendering and orbital continuity.
@@ -1009,14 +979,6 @@ function getState() {
       active: 'main',
       residentEnvironments: 1,
       wormhole: false,
-      raySteps: bodies.blackhole.uniforms.uSteps.value,
-      blackHoleOrientation: bodies.blackhole.orientation.toArray(),
-      blackHoleOrbit: {
-        parent: 'kepler',
-        radius: worldData.blackhole.distance,
-        inclination: worldData.blackhole.inclination,
-        ascendingNode: worldData.blackhole.ascendingNode,
-      },
       volumes: fields.snapshot(),
       modeledGalaxyStars: bodies.galaxy.group.children[1].geometry.attributes.position.count,
       volumeRender: volumePass.snapshot(),
@@ -1092,7 +1054,7 @@ if (document.modelContext?.registerTool) {
     name: 'navigate_world',
     title: 'Fly to a world',
     description:
-      'Move the camera smoothly to a planet, Hubble, the orbiting black hole, galaxy, nebula, molecular cloud, or the system overview. Volume approaches stay outside their bounds. Returns after the visible camera journey finishes.',
+      'Move the camera smoothly to a planet, Hubble, galaxy, nebula, molecular cloud, or the system overview. Volume approaches stay outside their bounds. Returns after the visible camera journey finishes.',
     inputSchema: {
       type: 'object',
       properties: { destination: { type: 'string', enum: destinations } },

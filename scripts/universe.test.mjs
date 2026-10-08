@@ -2,14 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { AnimationClocks } from '../dist/animation.js';
-import { schwarzschild, diskShift, raySteps } from '../dist/relativity.js';
 import { VolumeFields, addSpaceVolumes } from '../dist/deep-space.js';
-import {
-  spaceObjects,
-  orbitalOffset,
-  diskOrientation,
-  volumeFraming,
-} from '../dist/space-layout.js';
+import { spaceObjects, orbitalOffset, volumeFraming } from '../dist/space-layout.js';
 import { VolumeRenderPass } from '../dist/volume-renderer.js';
 import { readFile } from 'node:fs/promises';
 
@@ -45,23 +39,12 @@ test('Volume pressure releases resident detail even before the reduced budget ca
 
 test('Independent clocks remain local while every object shares one universe', () => {
   const clocks = new AnimationClocks();
-  clocks.advance(10, ['background', 'earth', 'kepler', 'blackhole']);
+  clocks.advance(10, ['background', 'earth', 'kepler', 'satellite']);
   const home = clocks.daysFor('kepler');
-  clocks.advance(50, ['background', 'galaxy', 'blackhole']);
+  clocks.advance(50, ['background', 'galaxy', 'satellite']);
   assert.equal(clocks.daysFor('kepler'), home);
   assert.equal(clocks.daysFor('galaxy'), 2.5);
-  assert.equal(clocks.daysFor('blackhole'), 3);
-});
-
-test('Schwarzschild reference lengths and Doppler asymmetry obey their physical limits', () => {
-  assert.equal(schwarzschild.photonOrbit, 1.5);
-  assert.ok(Math.abs(schwarzschild.shadow - 2.598076211) < 1e-8);
-  assert.equal(schwarzschild.isco, 3);
-  assert.throws(() => diskShift(2, 0), RangeError);
-  assert.ok(diskShift(6, 1) > diskShift(6, 0));
-  assert.ok(diskShift(6, -1) < diskShift(6, 0));
-  assert.ok(Math.abs(diskShift(1e9, 0) - 1) < 1e-8);
-  assert.deepEqual([0, 1, 2, 3, 4, 5].map(raySteps), [224, 192, 160, 128, 96, 80]);
+  assert.equal(clocks.daysFor('satellite'), 3);
 });
 
 test('Distant 3D objects share the scene and visits fit landscape and portrait views', () => {
@@ -110,32 +93,18 @@ test('Distant 3D objects share the scene and visits fit landscape and portrait v
   }
 });
 
-test('Inclined orbit preserves separation and disk orientations remain continuous and normalized', () => {
+test('Prescribed planetary orbit preserves separation throughout its inclined plane', () => {
   const orbit = {
-    distance: 28,
-    orbitPeriod: 950,
-    phase: 4.8,
-    inclination: 0.7,
-    ascendingNode: 0.82,
+    distance: 53,
+    orbitPeriod: 612,
+    phase: 2.16,
+    inclination: 0.08,
   };
-  const offsets = Array.from({ length: 32 }, (_, i) => orbitalOffset(orbit, (i * 950) / 32));
-  assert.ok(offsets.every((point) => Math.abs(point.length() - 28) < 1e-10));
-  for (const axis of ['x', 'y', 'z']) {
+  const offsets = Array.from({ length: 32 }, (_, i) => orbitalOffset(orbit, (i * 612) / 32));
+  assert.ok(offsets.every((point) => Math.abs(point.length() - 53) < 1e-10));
+  for (const [axis, extent] of Object.entries({ x: 100, y: 8, z: 100 })) {
     assert.ok(
-      Math.max(...offsets.map((p) => p[axis])) - Math.min(...offsets.map((p) => p[axis])) > 25,
-    );
-  }
-  const normals = [];
-  for (let time = 0; time <= 600; time += 10) {
-    const q = diskOrientation(time),
-      next = diskOrientation(time + 0.01);
-    assert.ok(Math.abs(q.length() - 1) < 1e-12);
-    assert.ok(q.angleTo(next) < 0.001);
-    normals.push(new THREE.Vector3(0, 1, 0).applyQuaternion(q));
-  }
-  for (const axis of ['x', 'y', 'z']) {
-    assert.ok(
-      Math.max(...normals.map((p) => p[axis])) - Math.min(...normals.map((p) => p[axis])) > 1,
+      Math.max(...offsets.map((p) => p[axis])) - Math.min(...offsets.map((p) => p[axis])) > extent,
     );
   }
 });
@@ -196,10 +165,12 @@ test('Completed volume cache still composites live source frames and moving fore
   pass.dispose();
 });
 
-test('Public controls expose one universe without a wormhole crossing action', async () => {
+test('Public controls expose one universe without black-hole or wormhole actions', async () => {
   const main = await readFile(new URL('../dist/main.js', import.meta.url), 'utf8');
   const html = await readFile(new URL('../dist/index.html', import.meta.url), 'utf8');
   assert.doesNotMatch(main, /UniverseJourney|cross_wormhole|createWormhole|universe-lifecycle/);
-  assert.doesNotMatch(html, /wormhole|Ellis throat/i);
+  assert.doesNotMatch(main, /blackhole|createBlackHole|SpaceRadiance|diskOrientation/);
+  assert.doesNotMatch(html, /wormhole|Ellis throat|black hole/i);
+  assert.throws(() => new AnimationClocks().validateTarget('blackhole'), TypeError);
   assert.match(main, /wormhole: false/);
 });

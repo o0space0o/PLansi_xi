@@ -85,3 +85,11 @@ export function makeField(kind, size) {
       }
   return data;
 }
+// Independent homogeneous-segment reference for the GPU volume integral.
+export function transfer(emission, extinction, distance) {
+  const transmission = Math.exp(-extinction * distance);
+  return {
+    transmission,
+    radiance: emission * (extinction > 1e-8 ? (1 - transmission) / extinction : distance),
+  };
+}

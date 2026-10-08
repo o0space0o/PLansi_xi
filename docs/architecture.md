@@ -2,7 +2,7 @@
 
 ## Project layout
 
-`main.js` owns one universe and a shared world catalogue. The live foreground scene contains the photographic sky, planets, Hubble and original black hole. A second render scene holds only static 3D galaxy/cloud matter at positions from `space-layout.js`; it is a compositing layer in the same universe. `deep-space.js` owns worker-generated Data3DTextures and their CPU/GPU accounting. `volume-renderer.js` caches only static matter radiance, invalidates on camera/texture changes and composites it over the latest live frame with foreground silhouette masks. `black-hole.js` traces Schwarzschild rays; `space-radiance.js` binds the resident photo maps and samples world-space matter on outgoing rays. No portal, second environment, boundary image copies or ray table remains. [Physics, controls and memory](space-objects.md).
+`main.js` owns one universe and a shared world catalogue. The live foreground scene contains the photographic sky, planets and Hubble. A second render scene holds only static 3D galaxy/cloud matter at positions from `space-layout.js`; it is a compositing layer in the same universe. `deep-space.js` owns worker-generated Data3DTextures and their CPU/GPU accounting. `volume-renderer.js` caches only static matter radiance, invalidates on camera/texture changes and composites it over the latest live frame with foreground silhouette masks. The black-hole renderer and its curved-ray helpers have been removed. No portal, second environment, boundary image copies or ray table remains. [Physics, controls and memory](space-objects.md).
 
 | Path                  | Purpose                                                             |
 | --------------------- | ------------------------------------------------------------------- |
@@ -23,7 +23,7 @@ The double-click launcher selects the official bundled x64/ARM64 runtime. `serve
 
 ## Scene and camera
 
-`main.js` owns camera journeys, pointer selection, input, frame-rate diagnostics, and WebMCP access. `animation.js` owns independent object/background clocks. Prescribed circular orbits are nested: the star → Earth → Luna/Hubble; the star → Kepler X → Aurelia/black hole. The black hole uses a 28-unit orbit with inclination 0.7 radians and ascending node 0.82 radians. Quaternion disk precession/nutation changes all three orientation axes without changing the spherical Schwarzschild metric. Galaxy/cloud positions remain fixed. World radii and orbital spacing are illustrative, not a scale model.
+`main.js` owns camera journeys, pointer selection, input, frame-rate diagnostics, and WebMCP access. `animation.js` owns independent object/background clocks. Prescribed circular orbits are nested: the star → Earth → Luna/Hubble; the star → Kepler X → Aurelia. Galaxy/cloud positions remain fixed. World radii and orbital spacing are illustrative, not a scale model.
 
 TrackballControls supports continuous rotations through the poles without a fixed world-up restriction. Navigation uses a quintic eased trajectory, predicts the target's orbital motion, and chooses an elevated route checked against nearby globes. Transporting the current camera-up direction avoids a sudden roll reset. The camera follows the selected moving body after arrival.
 

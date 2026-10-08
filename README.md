@@ -1,6 +1,6 @@
 # PLansi_xi
 
-A local Three.js space explorer with photographic planetary textures, a real **16K Milky Way panorama**, continuous camera flights, and music transmitted from an orbiting NASA Hubble model. The original compact Schwarzschild black hole orbits Kepler X, with an accretion disk that turns through diagonal orientations. A three-dimensional spiral galaxy, ionized nebula and molecular cloud share the main universe with adaptive density streaming.
+A local Three.js space explorer with photographic planetary textures, a real **16K Milky Way panorama**, continuous camera flights, and music transmitted from an orbiting NASA Hubble model. A three-dimensional spiral galaxy, ionized nebula and molecular cloud share the main universe with adaptive density streaming.
 
 **[Live website — o0space0o.app](https://o0space0o.app/)**
 
@@ -30,7 +30,6 @@ On macOS or Linux, install Node.js 24 or newer, run `node scripts/serve.mjs`, an
 | Wheel up / down **over an object**                 | Speed up / slow down only that object's orbit and spin    |
 | Wheel up / down **over empty sky**                 | Speed up / slow down the photographic background shimmer  |
 | 1 / 2 / 3 / 4 / 5                                  | Visit Earth / Luna / Kepler X / Aurelia / Hubble          |
-| B or 6                                             | Visit the original orbiting black hole                    |
 | G / N / C                                          | Visit the galaxy / nebula / molecular cloud               |
 | Escape                                             | Return to the system                                      |
 | T                                                  | Toggle photographic shimmer / steady space sky            |
@@ -41,13 +40,13 @@ Every target starts at **1×**. Enough downward scrolling pauses that target; sc
 
 ![Aurelia and its banded rings](docs/screenshots/aurelia.jpg)
 
-## Visit the black hole and distant matter
+## Visit distant matter
 
-Press **B** or **6** to approach the original black hole, now in an inclined orbit 28 scene units around Kepler X. Click the galaxy or a cloud, or use **G/N/C**, to approach at about 4.8 bounding radii, farther on portrait screens. Right-click/Escape returns to the planetary overview. The universe view has no labels or visible controls.
+Click the galaxy or a cloud, or use **G/N/C**, to approach at about 4.8 bounding radii, farther on portrait screens. Right-click/Escape returns to the planetary overview. The universe view has no labels or visible controls.
 
-The wormhole and separate environment have been removed. The galaxy and clouds occupy separate distant directions in the main universe. Workers stream density detail according to visibility, projected size and estimated memory. Only static volume light is cached; planets, sky, black hole and music remain live. All runtime data is local.
+The galaxy and clouds occupy separate distant directions in the main universe. Workers stream density detail according to visibility, projected size and estimated memory. Only static volume light is cached; planets, sky, spacecraft and music remain live. All runtime data is local.
 
-The Schwarzschild optics include the critical shadow, a disk outside the ISCO, gravitational redshift and Doppler beaming. The disk's prescribed precession changes its orientation without changing the spherical metric. Galaxy/gas fields are physically motivated models with normalized optical units, not a measured TNG snapshot or cosmological evolution. [Equations, assumptions and limits](docs/space-objects.md).
+Galaxy/gas fields are physically motivated models with normalized optical units, not a measured TNG snapshot or cosmological evolution. [Model assumptions and limits](docs/space-objects.md).
 
 ![Galaxy and clouds in the main universe](docs/screenshots/main-universe.jpg)
 
@@ -115,7 +114,7 @@ The [GitHub validation workflow](.github/workflows/validate.yml) runs the same c
 
 ## Current changes
 
-- Original black hole retained in an inclined Kepler orbit, with smoothly precessing disk orientation.
+- Black hole and its lensing, orbit, animation target and navigation controls removed.
 - Galaxy and clouds moved into the main universe, with wider bounded visits and visibility-based detail streaming.
 - Wormhole travel and its separate environment removed; static volume caching keeps foreground motion live.
 - Project renamed to **PLansi_xi** throughout the application, launcher, package, diagnostics, and documentation.

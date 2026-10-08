@@ -42,7 +42,7 @@ The GitHub download has **no songs**. Put your own files directly in **Audio/** 
 
 ## 6. Keep the best image
 
-Use **B** or **6** to visit the black hole orbiting Kepler X. Click the distant spiral galaxy or a cloud, or use **G/N/C**, to approach from a safe distance. They all share the main universe; right-click or Escape returns to the planetary overview. Volume detail streams within the memory budget while the planets and black hole continue moving. [Space-object guide and physics limits](space-objects.md).
+Click the distant spiral galaxy or a cloud, or use **G/N/C**, to approach from a safe distance. They all share the main universe; right-click or Escape returns to the planetary overview. Volume detail streams within the memory budget while the planets and spacecraft continue moving. [Space-object guide and physics limits](space-objects.md).
 
 Live adaptive graphics is enabled by default. It targets **60 FPS**, adjusting resolution, antialiasing, bloom, Hubble shadows, and photographic textures to the device and measured rendering load. It restores detail after sustained headroom. The maximum photographic sky is **16K** with **8K** cloud/night maps; prepared 8K/4K/2K alternatives reduce memory use on smaller computers.
 

@@ -3,7 +3,7 @@ import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 
 // A cache of this camera's computed 3D radiance, invalidated by camera/field
 // changes. Small interleaved pixel batches refine the actual volume integral.
-// Only static matter is cached; planets, sky, music and the black hole remain
+// Only static matter is cached; planets, sky, spacecraft and music remain
 // live. Foreground silhouettes mask the independently composed volume light.
 export class VolumeRenderPass extends Pass {
   constructor(scene, camera, fields, preferHD, foregroundBodies = () => []) {

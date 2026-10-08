@@ -1,7 +1,5 @@
 # Imagery and credits
 
-- Black-hole visual references: [NASA SVS](https://svs.gsfc.nasa.gov/14619/) and [James et al., black-hole lensing](https://arxiv.org/abs/1502.03808). These inform original shader code; their images, movie frames and renderer code are not bundled.
-
 - [NOIRLab all-sky photo](https://noirlab.edu/public/images/noirlab2430b/): NOIRLab/NSF/AURA/E. Slawik/M. Zamani, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The 40000 × 20000 photographic source is reduced locally to 16K and 8K with Lanczos3 and JPEG quality 96, without blur. Processing metadata is in `dist/assets/photographic-sky-source.json`.
 - [NASA Deep Star Maps 2020](https://svs.gsfc.nasa.gov/4851/): retained as source research in `original-assets/nasa-reference/`; not the rendered background. NASA SVS / Ernie Wright, based on Hipparcos-2, Tycho-2, Gaia DR2 and supporting catalogs.
 - [NASA Hubble Space Telescope 3D model](https://science.nasa.gov/resource/hubble-space-telescope-3d-model/): NASA Visualization Technology Applications and Development (VTAD). The high-detail GLB and acquisition metadata are in `dist/assets/models/`.

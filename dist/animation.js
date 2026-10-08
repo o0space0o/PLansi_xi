@@ -7,7 +7,6 @@ export const animationTargets = [
   'kepler',
   'aurelia',
   'satellite',
-  'blackhole',
   'galaxy',
   'nebula',
   'gas',

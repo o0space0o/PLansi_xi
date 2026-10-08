@@ -20,9 +20,8 @@ Wheel up/down over an object: speed up/slow down ONLY its orbit and spin.
 Wheel over empty sky: change ONLY the background shimmer speed.
 Scroll down far enough to pause that target; scroll up to resume. No zoom.
 A child still follows its parent's position, with its own orbital rate.
-1 Earth, 2 Luna, 3 Kepler X, 4 Aurelia, 5 Hubble, B/6 black hole.
+1 Earth, 2 Luna, 3 Kepler X, 4 Aurelia, 5 Hubble.
 G galaxy, N nebula, C molecular cloud. Escape: system overview.
-The original black hole orbits Kepler X with a turning diagonal disk.
 Galaxy/cloud visits stay about 4.8 radii away, farther on portrait screens.
 T: shimmer / steady space photograph. H: open the instructions.
 Reload resets every animation rate to 1x.
@@ -68,7 +67,7 @@ docs/tutorial.md - illustrated first visit
 docs/website-guide.md - complete controls and graphics
 docs/music-player.md - playlist, mouse/keyboard controls, spatial sound
 docs/starlight-science.md - real observations and scientific scope
-docs/space-objects.md - black-hole optics, 3D matter and memory
+docs/space-objects.md - 3D matter and memory
 docs/architecture.md - code and maintenance
 docs/validation.md - checks performed
 docs/credits.md - imagery, engine, runtime, and research-image credits

@@ -1,8 +1,8 @@
 # Using PLansi_xi
 
-## Black hole and distant objects
+## Distant objects
 
-Press **B** or **6** to approach the black hole orbiting Kepler X. **G**, **N** and **C**, or clicking the visible object, visit the spiral galaxy, nebula and molecular cloud in the main universe. Approaches stay about 4.8 radii away, farther on portrait screens. Right-click/Escape shows the planetary overview. There are no labels or visible controls. [Optics, 3D matter and memory](space-objects.md).
+**G**, **N** and **C**, or clicking the visible object, visit the spiral galaxy, nebula and molecular cloud in the main universe. Approaches stay about 4.8 radii away, farther on portrait screens. Right-click/Escape shows the planetary overview. There are no labels or visible controls. [3D matter and memory](space-objects.md).
 
 ## Start and stop
 
@@ -22,7 +22,6 @@ On macOS/Linux, install Node.js 24 or newer, run `node scripts/serve.mjs`, and o
 | Wheel up / down over a body                        | Accelerate / slow its own orbit and spin          |
 | Wheel up / down over empty sky                     | Accelerate / slow the background shimmer          |
 | 1 / 2 / 3 / 4 / 5                                  | Select Earth / Luna / Kepler X / Aurelia / Hubble |
-| B or 6                                             | Visit the orbiting black hole                     |
 | G / N / C                                          | Visit the galaxy / nebula / molecular cloud       |
 | Escape                                             | Return to the system overview                     |
 | T                                                  | Switch photographic shimmer / steady space view   |

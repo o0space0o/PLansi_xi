@@ -58,11 +58,8 @@ try {
     '/animation.js',
     '/graphics-policy.js',
     '/graphics-textures.js',
-    '/black-hole.js',
     '/deep-space.js',
     '/space-layout.js',
-    '/space-radiance.js',
-    '/relativity.js',
     '/volume-density.js',
     '/volume-renderer.js',
     '/volume-worker.js',
@@ -83,7 +80,6 @@ try {
     '/guide-screenshots/earth.jpg',
     '/guide-screenshots/aurelia.jpg',
     '/guide-screenshots/hubble.jpg',
-    '/guide-screenshots/black-hole.jpg',
     '/guide-screenshots/main-universe.jpg',
   ]) {
     const response = await fetch(base + path, { method: 'HEAD' });
